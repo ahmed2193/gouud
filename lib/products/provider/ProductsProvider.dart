@@ -7,7 +7,7 @@ class ProductsProvider with ChangeNotifier {
   final String url;
   ProductsProvider(this.url);
   Future<ProductsModel> productsData(int page) async {
-    // page = page - 1;
+    page = page - 1;
     final response = await ProductsRequest()
         .records(this.url + '&pageNo=' + page.toString() + '&pageSize=10');
     return ProductsModel.fromJson(json.decode(response.body));

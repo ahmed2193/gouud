@@ -1,4 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:gouud/SignUp/provider/SignUpProvider.dart';
+import 'package:gouud/SignUp/uiLogic/Logic.dart';
+import 'package:gouud/UI_EN/bottomHandler.dart';
 import 'package:gouud/UI_EN/constants/gouudColors.dart';
 
 class SignUp extends StatefulWidget {
@@ -8,6 +13,37 @@ class SignUp extends StatefulWidget {
 }
 
 class _SignUpState extends State<SignUp> {
+  final TextEditingController nameController = new TextEditingController();
+  final TextEditingController emailController = new TextEditingController();
+  final TextEditingController mobileController = new TextEditingController();
+  final TextEditingController passwordController = new TextEditingController();
+  final TextEditingController confirmPasswordController =
+      new TextEditingController();
+  Logic logic = new Logic();
+  Map<String, String> inputs = {};
+  String statusCode;
+  _onPress() {
+    setState(() {
+      inputs = logic.validation(
+          nameController.text.trim().toLowerCase(),
+          emailController.text.trim().toLowerCase(),
+          mobileController.text.trim().toLowerCase(),
+          passwordController.text.trim(),
+          confirmPasswordController.text.trim());
+    });
+  }
+
+  _foundEmail() {
+    setState(() {
+      inputs['Email'] = 'Email is already taken.';
+      inputs['Full name'] = '';
+      inputs['Confirm password'] = '';
+      inputs['Password'] = '';
+      inputs['Mobile number'] = '';
+    });
+    print(inputs);
+  }
+
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
@@ -66,26 +102,66 @@ class _SignUpState extends State<SignUp> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         inputSignUp(
-                            'FULL NAME',
+                            'Full name',
                             Icon(
                               Icons.person,
                               color: gouudAppColor,
-                            )),
+                            ),
+                            nameController,
+                            inputs),
                       ],
                     ),
                   ),
-                  new Country(),
+
                   new Padding(
                     padding: new EdgeInsets.all(8.0),
                     child: new Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         inputSignUp(
-                            'EMAIL',
+                            'Mobile number',
+                            Padding(
+                                padding: EdgeInsets.only(
+                                    top: 10, left: 10, bottom: 10),
+                                child: Text(
+                                  '+2',
+                                  style: TextStyle(color: gouudAppColor),
+                                )),
+                            mobileController,
+                            inputs),
+                      ],
+                    ),
+                  ),
+                  // new Country(),
+                  // new Padding(
+                  //   padding: new EdgeInsets.all(8.0),
+                  //   child: new Row(
+                  //     mainAxisAlignment: MainAxisAlignment.center,
+                  //     children: <Widget>[
+                  //       inputMobile(
+                  //           'Mobile number',
+                  //           Icon(
+                  //             Icons.person,
+                  //             color: gouudAppColor,
+                  //           ),
+                  //           mobileController,
+                  //           inputs),
+                  //     ],
+                  //   ),
+                  // ),
+                  new Padding(
+                    padding: new EdgeInsets.all(8.0),
+                    child: new Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        inputSignUp(
+                            'Email',
                             Icon(
                               Icons.email,
                               color: gouudAppColor,
-                            )),
+                            ),
+                            emailController,
+                            inputs),
                       ],
                     ),
                   ),
@@ -94,7 +170,7 @@ class _SignUpState extends State<SignUp> {
                     child: new Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        new Password('PASSWORD'),
+                        new Password('Password', passwordController, inputs),
                       ],
                     ),
                   ),
@@ -103,7 +179,8 @@ class _SignUpState extends State<SignUp> {
                     child: new Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        new Password('CONFIRM PASSWORD'),
+                        new Password('Confirm password',
+                            confirmPasswordController, inputs),
                       ],
                     ),
                   ),
@@ -112,10 +189,20 @@ class _SignUpState extends State<SignUp> {
                     child: new Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        signUpButton('CREATE'),
+                        new Container(
+                          child: ProgressButton(
+                              nameController,
+                              emailController,
+                              mobileController,
+                              passwordController,
+                              confirmPasswordController,
+                              _onPress,
+                              _foundEmail),
+                        ),
                       ],
                     ),
                   ),
+
                   new Padding(
                     padding: new EdgeInsets.all(8.0),
                     child: new Row(
@@ -217,7 +304,7 @@ class _SignUpState extends State<SignUp> {
   }
 
   /// button widget
-  Widget signUpButton(label) {
+  Widget signUpButton(label, _onPress) {
     return new Container(
       width: 150,
       height: 40,
@@ -225,9 +312,7 @@ class _SignUpState extends State<SignUp> {
       child: ButtonTheme(
         child: RaisedButton(
           color: gouudAppColor,
-          onPressed: () {
-            Navigator.pushReplacementNamed(context, 'SignUpVerification');
-          },
+          onPressed: _onPress,
           shape: new RoundedRectangleBorder(
             borderRadius: new BorderRadius.circular(30.0),
           ),
@@ -242,36 +327,131 @@ class _SignUpState extends State<SignUp> {
   }
 
   /// text input widget
-  Widget inputSignUp(label, iconType) {
-    return new Container(
-        height: 40,
-        width: 260,
-        child: new TextField(
-          decoration: new InputDecoration(
-              focusedBorder: OutlineInputBorder(
-                borderRadius: const BorderRadius.all(
-                  const Radius.circular(30.0),
-                ),
-                borderSide: BorderSide(color: gouudAppColor, width: 2.0),
+  Widget inputSignUp(label, iconType, controller, inputs) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        new Container(
+            height: 40,
+            width: 260,
+            child: new TextField(
+              controller: controller,
+              decoration: new InputDecoration(
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: const BorderRadius.all(
+                      const Radius.circular(30.0),
+                    ),
+                    borderSide: BorderSide(color: gouudAppColor, width: 2.0),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: inputs.isNotEmpty
+                        ? inputs[label] != ""
+                            ? BorderSide(color: gouudErrorTextColor, width: 2.0)
+                            : BorderSide(color: gouudWhite, width: 2.0)
+                        : BorderSide(color: gouudWhite, width: 2.0),
+                    borderRadius: const BorderRadius.all(
+                      const Radius.circular(30.0),
+                    ),
+                  ),
+                  filled: true,
+                  hintStyle: new TextStyle(color: gouudGrey, fontSize: 12),
+                  hintText: label.toString(),
+                  prefixIcon: iconType,
+                  fillColor: gouudWhite),
+            )),
+        inputs.isNotEmpty
+            ? inputs[label] != ""
+                ? Padding(
+                    padding: EdgeInsets.only(left: 15),
+                    child: Text(
+                      inputs[label],
+                      style:
+                          TextStyle(fontSize: 12, color: gouudErrorTextColor),
+                    ))
+                : Container(
+                    height: 0,
+                  )
+            : Container(
+                height: 0,
               ),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: gouudWhite, width: 2.0),
-                borderRadius: const BorderRadius.all(
-                  const Radius.circular(30.0),
+      ],
+    );
+  }
+
+  // Widget error()
+  Widget inputMobile(label, iconType, controller, inputs) {
+    return new Column(
+      children: [
+        Container(
+            height: 40,
+            width: 260,
+            child: new TextField(
+              controller: controller,
+              decoration: new InputDecoration(
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: const BorderRadius.all(
+                    const Radius.circular(30.0),
+                  ),
+                  borderSide: BorderSide(color: gouudAppColor, width: 2.0),
                 ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: inputs.isNotEmpty
+                      ? inputs[label] != ""
+                          ? BorderSide(color: gouudErrorTextColor, width: 2.0)
+                          : BorderSide(color: gouudWhite, width: 2.0)
+                      : BorderSide(color: gouudWhite, width: 2.0),
+                  borderRadius: const BorderRadius.all(
+                    const Radius.circular(30.0),
+                  ),
+                ),
+                filled: true,
+                hintStyle: new TextStyle(color: gouudGrey, fontSize: 12),
+                hintText: label.toString(),
+                prefixIcon: Padding(
+                    padding: EdgeInsets.only(right: 10),
+                    child: Container(
+                        decoration: new BoxDecoration(
+                          color: gouudAppColor,
+                          borderRadius: const BorderRadius.only(
+                              bottomLeft: const Radius.circular(30.0),
+                              topLeft: const Radius.circular(30.0)),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(10),
+                          child: Text(
+                            '+2 EG',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: gouudWhite),
+                          ),
+                        ))),
+                fillColor: gouudWhite,
               ),
-              filled: true,
-              hintStyle: new TextStyle(color: gouudGrey, fontSize: 12),
-              hintText: label.toString(),
-              prefixIcon: iconType,
-              fillColor: gouudWhite),
-        ));
+            )),
+        inputs.isNotEmpty
+            ? inputs[label] != ""
+                ? Padding(
+                    padding: EdgeInsets.only(left: 15),
+                    child: Text(
+                      inputs[label],
+                      style:
+                          TextStyle(fontSize: 12, color: gouudErrorTextColor),
+                    ))
+                : Container(
+                    height: 0,
+                  )
+            : Container(
+                height: 0,
+              ),
+      ],
+    );
   }
 }
 
 class Password extends StatefulWidget {
   final String label;
-  Password(this.label);
+  final TextEditingController controller;
+  final Map<String, String> inputs;
+  Password(this.label, this.controller, this.inputs);
   @override
   _PasswordState createState() => _PasswordState();
 }
@@ -280,47 +460,72 @@ class _PasswordState extends State<Password> {
   bool passwordVisible = true;
   @override
   Widget build(BuildContext context) {
-    return new Container(
-        height: 40,
-        width: 260,
-        child: new TextField(
-          cursorColor: gouudAppColor,
-          keyboardType: TextInputType.visiblePassword,
-          obscureText: passwordVisible,
-          decoration: new InputDecoration(
-              focusedBorder: OutlineInputBorder(
-                borderRadius: const BorderRadius.all(
-                  const Radius.circular(30.0),
-                ),
-                borderSide: BorderSide(color: gouudAppColor, width: 2.0),
+    return new Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+            height: 40,
+            width: 260,
+            child: new TextField(
+              controller: widget.controller,
+              cursorColor: gouudAppColor,
+              keyboardType: TextInputType.visiblePassword,
+              obscureText: passwordVisible,
+              decoration: new InputDecoration(
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: const BorderRadius.all(
+                      const Radius.circular(30.0),
+                    ),
+                    borderSide: BorderSide(color: gouudAppColor, width: 2.0),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: widget.inputs.isNotEmpty
+                        ? widget.inputs[widget.label] != ""
+                            ? BorderSide(color: gouudErrorTextColor, width: 2.0)
+                            : BorderSide(color: gouudWhite, width: 2.0)
+                        : BorderSide(color: gouudWhite, width: 2.0),
+                    borderRadius: const BorderRadius.all(
+                      const Radius.circular(30.0),
+                    ),
+                  ),
+                  filled: true,
+                  hintStyle: new TextStyle(color: gouudGrey, fontSize: 12),
+                  hintText: widget.label,
+                  prefixIcon: Icon(
+                    Icons.lock,
+                    color: gouudAppColor,
+                  ),
+                  suffixIcon: IconButton(
+                    // onPressed: () => _controller.clear(),
+                    icon: Icon(
+                      passwordVisible ? Icons.visibility_off : Icons.visibility,
+                      color: gouudAppColor,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        passwordVisible = !passwordVisible;
+                      });
+                    },
+                  ),
+                  fillColor: gouudWhite),
+            )),
+        (widget.inputs).isNotEmpty
+            ? widget.inputs[widget.label] != ""
+                ? Padding(
+                    padding: EdgeInsets.only(left: 15),
+                    child: Text(
+                      widget.inputs[widget.label],
+                      style:
+                          TextStyle(fontSize: 12, color: gouudErrorTextColor),
+                    ))
+                : Container(
+                    height: 0,
+                  )
+            : Container(
+                height: 0,
               ),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: gouudWhite, width: 2.0),
-                borderRadius: const BorderRadius.all(
-                  const Radius.circular(30.0),
-                ),
-              ),
-              filled: true,
-              hintStyle: new TextStyle(color: gouudGrey, fontSize: 12),
-              hintText: widget.label,
-              prefixIcon: Icon(
-                Icons.lock,
-                color: gouudAppColor,
-              ),
-              suffixIcon: IconButton(
-                // onPressed: () => _controller.clear(),
-                icon: Icon(
-                  passwordVisible ? Icons.visibility_off : Icons.visibility,
-                  color: gouudAppColor,
-                ),
-                onPressed: () {
-                  setState(() {
-                    passwordVisible = !passwordVisible;
-                  });
-                },
-              ),
-              fillColor: gouudWhite),
-        ));
+      ],
+    );
   }
 }
 
@@ -349,20 +554,6 @@ class _CountryState extends State<Country> {
         //     ],
         //   ),
         // ),
-        new Padding(
-          padding: new EdgeInsets.all(8.0),
-          child: new Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              inputMobile(
-                  'MOBILE NUMBER',
-                  Icon(
-                    Icons.person,
-                    color: gouudAppColor,
-                  )),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -440,49 +631,6 @@ class _CountryState extends State<Country> {
         ));
   }
 
-  Widget inputMobile(label, iconType) {
-    return new Container(
-        height: 40,
-        width: 260,
-        child: new TextField(
-          decoration: new InputDecoration(
-            focusedBorder: OutlineInputBorder(
-              borderRadius: const BorderRadius.all(
-                const Radius.circular(30.0),
-              ),
-              borderSide: BorderSide(color: gouudAppColor, width: 2.0),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: gouudWhite, width: 2.0),
-              borderRadius: const BorderRadius.all(
-                const Radius.circular(30.0),
-              ),
-            ),
-            filled: true,
-            hintStyle: new TextStyle(color: gouudGrey, fontSize: 12),
-            hintText: label.toString(),
-            prefixIcon: Padding(
-                padding: EdgeInsets.only(right: 10),
-                child: Container(
-                    decoration: new BoxDecoration(
-                      color: gouudAppColor,
-                      borderRadius: const BorderRadius.only(
-                          bottomLeft: const Radius.circular(30.0),
-                          topLeft: const Radius.circular(30.0)),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(10),
-                      child: Text(
-                        '+2 EG',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: gouudWhite),
-                      ),
-                    ))),
-            fillColor: gouudWhite,
-          ),
-        ));
-  }
-
   Future<List<String>> _getData() async {
     var values = new List<String>();
     values.add("Horses");
@@ -499,5 +647,140 @@ class MyBehavior extends ScrollBehavior {
   Widget buildViewportChrome(
       BuildContext context, Widget child, AxisDirection axisDirection) {
     return child;
+  }
+}
+
+class ProgressButton extends StatefulWidget {
+  final TextEditingController nameController;
+  final TextEditingController emailController;
+  final TextEditingController mobileController;
+  final TextEditingController passwordController;
+  final TextEditingController confirmPasswordController;
+  final Function() onpress;
+  final Function() _foundEmail;
+  ProgressButton(
+      this.nameController,
+      this.emailController,
+      this.mobileController,
+      this.passwordController,
+      this.confirmPasswordController,
+      this.onpress,
+      this._foundEmail);
+  @override
+  _ProgressButtonState createState() => _ProgressButtonState();
+}
+
+class _ProgressButtonState extends State<ProgressButton>
+    with TickerProviderStateMixin {
+  int _state = 0;
+  Animation animation;
+  AnimationController _controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return new Container(
+      width: 150,
+      height: 40,
+      // padding: EdgeInsets.only(top: 60),
+      child: ButtonTheme(
+        child: RaisedButton(
+          animationDuration: Duration(milliseconds: 0),
+          color: gouudAppColor,
+          onPressed: () {
+            widget.onpress();
+            setState(() {
+              animateButton();
+            });
+          },
+          shape: new RoundedRectangleBorder(
+            borderRadius: new BorderRadius.circular(30.0),
+          ),
+          child: setUpButtonChild(),
+        ),
+      ),
+      decoration: BoxDecoration(
+          borderRadius: new BorderRadius.circular(30.0),
+          border: Border.all(color: gouudWhite)),
+    );
+  }
+
+  setUpButtonChild() {
+    if (_state == 0) {
+      return Text(
+        "Create",
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+        ),
+      );
+    } else if (_state == 1) {
+      return SizedBox(
+        height: 30,
+        width: 30,
+        child: CircularProgressIndicator(
+          value: null,
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        ),
+      );
+    } else {
+      return Icon(Icons.check, color: Colors.white);
+    }
+  }
+
+  void animateButton() {
+    _controller =
+        AnimationController(duration: Duration(milliseconds: 300), vsync: this);
+
+    animation = Tween(begin: 0.0, end: 1).animate(_controller)
+      ..addListener(() {
+        setState(() {});
+      });
+    _controller.forward();
+
+    // setState(() {
+    //   _state = 1;
+    // });
+    Logic logic = new Logic();
+    setState(() {
+      if (logic
+          .validation(
+              widget.nameController.text.trim().toLowerCase(),
+              widget.emailController.text.trim().toLowerCase(),
+              widget.mobileController.text.trim().toLowerCase(),
+              widget.passwordController.text.trim(),
+              widget.confirmPasswordController.text.trim())
+          .isEmpty) {
+        _state = 1;
+      } else {
+        _state = 0;
+      }
+    });
+
+    if (_state == 1) {
+      SignUpProvider signUpP = new SignUpProvider();
+      signUpP
+          .register(logic.name, logic.email, logic.mobile, logic.password,
+              logic.confirmPassword)
+          .whenComplete(() {
+        setState(() {
+          if (signUpP.code == "200") {
+            _state = 2;
+            signUpP.getToken(logic.email, logic.password).whenComplete(() {
+              print('done');
+              if (signUpP.tokenCode == "200") {
+                Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (_) => BottomHandler()));
+              } else {
+                print('enternal server error ');
+              }
+            });
+          } else {
+            widget._foundEmail();
+            _state = 0;
+          }
+        });
+        print(signUpP.code);
+      });
+    }
   }
 }

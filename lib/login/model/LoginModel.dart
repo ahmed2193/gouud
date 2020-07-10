@@ -1,4 +1,4 @@
-class SignUpModel {
+class LoginModel {
   String accessToken;
   String tokenType;
   int expiresIn;
@@ -6,7 +6,7 @@ class SignUpModel {
   String issued;
   String expires;
 
-  SignUpModel(
+  LoginModel(
       {this.accessToken,
       this.tokenType,
       this.expiresIn,
@@ -14,7 +14,7 @@ class SignUpModel {
       this.issued,
       this.expires});
 
-  SignUpModel.fromJson(Map<String, dynamic> json) {
+  LoginModel.fromJson(Map<String, dynamic> json) {
     accessToken = json['access_token'];
     tokenType = json['token_type'];
     expiresIn = json['expires_in'];

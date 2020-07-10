@@ -4,7 +4,7 @@ import 'package:gouud/SplashScreen.dart';
 import 'package:gouud/UI_EN/BestSeller.dart';
 import 'package:gouud/favourite/view/Favourite.dart';
 import 'package:gouud/UI_EN/ForgetPassword.dart';
-import 'package:gouud/UI_EN/Login.dart';
+import 'package:gouud/login/view/Login.dart';
 import 'package:gouud/UI_EN/Home.dart';
 import 'package:gouud/aboutApp/view/AboutApp.dart';
 import 'package:gouud/cart/view/Cart.dart';

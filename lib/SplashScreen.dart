@@ -12,7 +12,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   _goToHomepage(BuildContext context) async {
-    await Future.delayed(Duration(seconds: 4));
+    await Future.delayed(Duration(seconds: 0));
     Navigator.pushNamedAndRemoveUntil(context, SelectLanguage.id, (r) => false);
   }
 

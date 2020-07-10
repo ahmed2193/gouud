@@ -8,3 +8,4 @@ Color gouudGrey = Colors.grey;
 Color gouudFontColor = Colors.white54;
 Color gouudBlackFontColor = Colors.black45;
 Color gouudGrayFontColor = Colors.black26;
+Color gouudErrorTextColor = Colors.red[300];
