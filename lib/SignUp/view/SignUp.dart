@@ -335,20 +335,20 @@ class _CountryState extends State<Country> {
   Widget build(BuildContext context) {
     return new Column(
       children: <Widget>[
-        new Padding(
-          padding: new EdgeInsets.all(8.0),
-          child: new Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              inputCountry(
-                  'FULL NAME',
-                  Icon(
-                    Icons.location_on,
-                    color: gouudWhite,
-                  )),
-            ],
-          ),
-        ),
+        // new Padding(
+        //   padding: new EdgeInsets.all(8.0),
+        //   child: new Row(
+        //     mainAxisAlignment: MainAxisAlignment.center,
+        //     children: <Widget>[
+        //       inputCountry(
+        //           'FULL NAME',
+        //           Icon(
+        //             Icons.location_on,
+        //             color: gouudWhite,
+        //           )),
+        //     ],
+        //   ),
+        // ),
         new Padding(
           padding: new EdgeInsets.all(8.0),
           child: new Row(
@@ -461,21 +461,23 @@ class _CountryState extends State<Country> {
             filled: true,
             hintStyle: new TextStyle(color: gouudGrey, fontSize: 12),
             hintText: label.toString(),
-            prefixIcon: Container(
-                decoration: new BoxDecoration(
-                  color: gouudAppColor,
-                  borderRadius: const BorderRadius.only(
-                      bottomLeft: const Radius.circular(30.0),
-                      topLeft: const Radius.circular(30.0)),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(10),
-                  child: Text(
-                    '+2 EG',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: gouudWhite),
-                  ),
-                )),
+            prefixIcon: Padding(
+                padding: EdgeInsets.only(right: 10),
+                child: Container(
+                    decoration: new BoxDecoration(
+                      color: gouudAppColor,
+                      borderRadius: const BorderRadius.only(
+                          bottomLeft: const Radius.circular(30.0),
+                          topLeft: const Radius.circular(30.0)),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(10),
+                      child: Text(
+                        '+2 EG',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: gouudWhite),
+                      ),
+                    ))),
             fillColor: gouudWhite,
           ),
         ));

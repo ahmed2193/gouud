@@ -5,6 +5,7 @@ import 'package:gouud/UI_EN/constants/gouudColors.dart';
 import 'package:gouud/sectionProducts/view/SectionProducts.dart';
 import 'package:gouud/sections/model/SectionsModel.dart';
 import 'package:gouud/sections/provider/SectionsProvider.dart';
+import 'package:gouud/specialOffers/view/SpecialOffers.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
 
 ///image mapping
@@ -308,75 +309,79 @@ class _SpecialOfferCardState extends State<SpecialOfferCard> {
   Widget build(BuildContext context) {
     return Padding(
         padding: EdgeInsets.all(10),
-        child: Container(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Expanded(
-                flex: 3,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(left: 5),
-                        child: Container(
-                          decoration: new BoxDecoration(
-                              image: new DecorationImage(
-                                  image: new AssetImage(
-                                      "assets/icons/" + widget.image),
-                                  fit: BoxFit.fill)),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                        child: Padding(
-                      padding: EdgeInsets.only(top: 10, bottom: 30, right: 10),
-                      child: offer(),
-                    ))
-                  ],
-                ),
-              ),
-              Expanded(
-                  flex: 2,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          GestureDetector(
-                            child: Text(
-                              widget.text,
-                              style: TextStyle(color: gouudWhite, fontSize: 10),
+        child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (BuildContext context) => SpecialOffers()));
+            },
+            child: Container(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Expanded(
+                    flex: 3,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 5),
+                            child: Container(
+                              decoration: new BoxDecoration(
+                                  image: new DecorationImage(
+                                      image: new AssetImage(
+                                          "assets/icons/" + widget.image),
+                                      fit: BoxFit.fill)),
                             ),
-                            onTap: () {},
                           ),
-                          GestureDetector(
-                              onTap: () {},
-                              child: Text(
+                        ),
+                        Expanded(
+                            child: Padding(
+                          padding:
+                              EdgeInsets.only(top: 10, bottom: 30, right: 10),
+                          child: offer(),
+                        ))
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                      flex: 2,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Text(
+                                widget.text,
+                                style:
+                                    TextStyle(color: gouudWhite, fontSize: 10),
+                              ),
+                              Text(
                                 'Touch pointer move a lot',
                                 style: TextStyle(
                                     color: gouudFontColor, fontSize: 8),
-                              ))
+                              )
+                            ],
+                          ),
+                          Icon(
+                            Icons.favorite,
+                            color: gouudWhite,
+                          )
                         ],
-                      ),
-                      Icon(
-                        Icons.favorite,
-                        color: gouudWhite,
-                      )
-                    ],
-                  ))
-            ],
-          ),
-          decoration: new BoxDecoration(
-            color: gouudAppColor,
-            boxShadow: [BoxShadow(color: gouudGrey, spreadRadius: 1)],
-            borderRadius: BorderRadius.all(Radius.circular(25.0)),
-          ),
-        ));
+                      ))
+                ],
+              ),
+              decoration: new BoxDecoration(
+                color: gouudAppColor,
+                boxShadow: [BoxShadow(color: gouudGrey, spreadRadius: 1)],
+                borderRadius: BorderRadius.all(Radius.circular(25.0)),
+              ),
+            )));
   }
 
   /// button widget

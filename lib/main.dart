@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:gouud/SplashScreen.dart';
 import 'package:gouud/UI_EN/BestSeller.dart';
-import 'package:gouud/UI_EN/Favourite.dart';
+import 'package:gouud/favourite/view/Favourite.dart';
 import 'package:gouud/UI_EN/ForgetPassword.dart';
 import 'package:gouud/UI_EN/Login.dart';
 import 'package:gouud/UI_EN/Home.dart';
@@ -17,7 +17,7 @@ import 'package:gouud/UI_EN/SelectLanguage.dart';
 import 'package:gouud/UI_EN/PasswordVerification.dart';
 import 'package:gouud/UI_EN/SignUpVerification.dart';
 import 'package:gouud/UI_EN/ResetPassword.dart';
-import 'package:gouud/UI_EN/SignUp.dart';
+import 'package:gouud/SignUp/view/SignUp.dart';
 import 'package:gouud/UI_EN/bottomHandler.dart';
 
 void main() async {
