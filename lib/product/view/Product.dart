@@ -9,6 +9,7 @@ import 'package:gouud/product/provider/ProductProvider.dart';
 import 'package:gouud/sectionProducts/model/BestSellerModel.dart';
 import 'package:gouud/sectionProducts/provider/BestSellerProvider.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
+import 'package:toast/toast.dart';
 
 class Product extends StatefulWidget {
   static const id = 'Product';
@@ -56,7 +57,15 @@ class _ProductState extends State<Product> {
       });
       if (productObj.statusCode == '200') {
         print('done');
+        Toast.show("Product has added to cart", context,
+            duration: 4, gravity: Toast.BOTTOM);
       } else {
+        Toast.show(
+          "server error, please try again later ",
+          context,
+          duration: 4,
+          gravity: Toast.BOTTOM,
+        );
         print('failed');
       }
     });
@@ -65,7 +74,8 @@ class _ProductState extends State<Product> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-        bottomNavigationBar: bottomBar(),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: gouudFloatingButton(),
         extendBody: true,
         extendBodyBehindAppBar: true,
         appBar: bar(),
@@ -149,8 +159,8 @@ class _ProductState extends State<Product> {
                             ),
                             NarrowCardViewAll('BEST SELLER', () {}),
                             new Container(
-                              padding: EdgeInsets.only(bottom: 50),
-                              margin: EdgeInsets.only(top: 20, bottom: 0),
+                              // padding: EdgeInsets.only(bottom: 50),
+                              margin: EdgeInsets.only(top: 20, bottom: 60),
                               height: 300,
                               child: FutureBuilder<List<BestSellerModel>>(
                                   future: bestSeller,
@@ -207,46 +217,20 @@ class _ProductState extends State<Product> {
             ])));
   }
 
-  Widget bottomBar() {
-    return GestureDetector(
-        onTap: _addToCart,
-        child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(
-                  topRight: Radius.circular(30), topLeft: Radius.circular(30)),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black38, spreadRadius: 0, blurRadius: 10),
-              ],
-            ),
-            child: ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30.0),
-                  topRight: Radius.circular(30.0),
-                ),
-                child: Container(
-                  padding: EdgeInsets.only(right: 100, left: 100),
-                  height: 50,
-                  color: gouudWhite,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      stateIndicator == 0
-                          ? Icon(
-                              Icons.add_shopping_cart,
-                              color: gouudAppColor,
-                            )
-                          : CircularProgressIndicator(
-                              strokeWidth: 2,
-                              backgroundColor: gouudBackgroundColor,
-                            ),
-                      Text(
-                        "Add to cart",
-                        style: TextStyle(color: gouudAppColor),
-                      ),
-                    ],
-                  ),
-                ))));
+  Widget gouudFloatingButton() {
+    return new FloatingActionButton.extended(
+        icon: stateIndicator == 0
+            ? Icon(
+                Icons.add_shopping_cart,
+                color: gouudWhite,
+              )
+            : CircularProgressIndicator(
+                strokeWidth: 2,
+                backgroundColor: gouudBackgroundColor,
+              ),
+        label: Text("add to cart"),
+        backgroundColor: gouudAppColor,
+        onPressed: _addToCart);
   }
 
   Widget bar() {
@@ -356,14 +340,14 @@ class _CardItemSectionState extends State<CardItemSection> {
                                 Text(
                                   '30 SAR',
                                   style: TextStyle(
-                                      fontSize: 10,
+                                      fontSize: 8,
                                       color: gouudAppColor,
                                       decoration: TextDecoration.lineThrough),
                                 ),
                                 Text(
                                   productPrice.toString(),
                                   style: TextStyle(
-                                      fontSize: 14, color: gouudAppColor),
+                                      fontSize: 12, color: gouudAppColor),
                                   textAlign: TextAlign.center,
                                 ),
                               ],
@@ -435,8 +419,9 @@ class _CardItemSectionState extends State<CardItemSection> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
                           Text(
-                            'AD LOCATION',
-                            style: TextStyle(fontSize: 12),
+                            'Add location',
+                            style: TextStyle(
+                                fontSize: 12, color: gouudGrayFontColor),
                           ),
                           Row(
                             children: <Widget>[
@@ -464,8 +449,9 @@ class _CardItemSectionState extends State<CardItemSection> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
                           Text(
-                            'RATING',
-                            style: TextStyle(fontSize: 12),
+                            'Rating',
+                            style: TextStyle(
+                                fontSize: 12, color: gouudGrayFontColor),
                           ),
                           Center(
                               child: SmoothStarRating(

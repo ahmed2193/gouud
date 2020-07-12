@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:gouud/UI_EN/constants/gouudColors.dart';
-import 'package:gouud/payNow/view/PayNow.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
 import 'package:gouud/UI_EN/constants/BarContent.dart';
 
@@ -13,7 +12,7 @@ class Cart extends StatefulWidget {
 class _CartState extends State<Cart> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   var rating = 3.0;
-
+  int stateIndicator = 0;
   String page;
   @override
   void initState() {
@@ -24,6 +23,8 @@ class _CartState extends State<Cart> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: gouudFloatingButton(),
       extendBodyBehindAppBar: true,
       extendBody: true,
       appBar: bar(),
@@ -64,42 +65,23 @@ class _CartState extends State<Cart> {
               ]),
         ]),
       ),
-      bottomNavigationBar: ClipRRect(
-        borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30.0), topRight: Radius.circular(30.0)),
-        child: ButtonTheme(
-          height: 60,
-          child: RaisedButton(
-              onPressed: () {},
-              color: gouudAppColor,
-              textColor: gouudWhite,
-              child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (BuildContext context) => PayNow()));
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(right: 10),
-                        child: Icon(
-                          Icons.monetization_on,
-                          color: gouudWhite,
-                          size: 40,
-                        ),
-                      ),
-                      Text(
-                        'PAY ALL CART',
-                        style: TextStyle(color: gouudWhite, fontSize: 14),
-                      ),
-                    ],
-                  ))),
-        ),
-      ),
     );
+  }
+
+  Widget gouudFloatingButton() {
+    return new FloatingActionButton.extended(
+        icon: stateIndicator == 0
+            ? Icon(
+                Icons.monetization_on,
+                color: gouudWhite,
+              )
+            : CircularProgressIndicator(
+                strokeWidth: 2,
+                backgroundColor: gouudBackgroundColor,
+              ),
+        label: Text("Pay"),
+        backgroundColor: gouudAppColor,
+        onPressed: () {});
   }
 
   Widget location() {

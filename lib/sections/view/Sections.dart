@@ -6,7 +6,6 @@ import 'package:gouud/sectionProducts/view/SectionProducts.dart';
 import 'package:gouud/sections/model/SectionsModel.dart';
 import 'package:gouud/sections/provider/SectionsProvider.dart';
 import 'package:gouud/specialOffers/view/SpecialOffers.dart';
-import 'package:smooth_star_rating/smooth_star_rating.dart';
 
 ///image mapping
 final List<String> imageList = [
