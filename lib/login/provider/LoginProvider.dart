@@ -23,6 +23,7 @@ class LoginProvider with ChangeNotifier {
     final key = 'token';
     // bearer
     var value = token;
+    print(token);
     prefs.setString(key, value);
   }
 }

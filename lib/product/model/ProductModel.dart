@@ -5,6 +5,7 @@ class ProductModel {
   String productDescription;
   String productPrice;
   double productRate;
+  int productID;
 
   ProductModel(
       {this.productFiles,
@@ -12,7 +13,8 @@ class ProductModel {
       this.productName,
       this.productDescription,
       this.productPrice,
-      this.productRate});
+      this.productRate,
+      this.productID});
 
   ProductModel.fromJson(Map<String, dynamic> json) {
     if (json['ProductFiles'] != null) {
@@ -31,6 +33,8 @@ class ProductModel {
     productDescription = json['ProductDescription'];
     productPrice = json['ProductPrice'];
     productRate = json['ProductRate'];
+    productRate = json['ProductRate'];
+    productID = json['ProductID'];
   }
 
   Map<String, dynamic> toJson() {

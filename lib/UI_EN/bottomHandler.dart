@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gouud/favourite/view/Favourite.dart';
-import 'package:gouud/UI_EN/Home.dart';
+import 'package:gouud/home/view/Home.dart';
 import 'package:gouud/UI_EN/constants/custom-widget.dart';
 import 'package:gouud/offers/view/Offers.dart';
 import 'package:gouud/profile/view/Profile.dart';

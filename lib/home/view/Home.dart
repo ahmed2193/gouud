@@ -1,8 +1,14 @@
 import 'package:carousel_slider/carousel_options.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image/network.dart';
 import 'package:gouud/UI_EN/constants/BarContent.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:gouud/UI_EN/constants/gouudColors.dart';
+import 'package:gouud/product/view/Product.dart';
+import 'package:gouud/sectionProducts/model/BestSellerModel.dart';
+import 'package:gouud/sectionProducts/provider/BestSellerProvider.dart';
+import 'package:gouud/specialOffers/view/SpecialOffers.dart';
+import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
 
 final List<String> imageList = [
@@ -51,15 +57,16 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-
   List<List> cardData = [
     ['erwaa-٢٣.png', 'MOSQUE OFFER'],
     ['erwaa-٢٤.png', 'COMPANY OFFER'],
   ];
-  viewNavigate() {
-    // Navigator.push(context,
-    //     MaterialPageRoute(builder: (BuildContext context) => Products()));
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  Future<List<BestSellerModel>> bestSeller;
+  void initState() {
+    super.initState();
+    bestSeller = BestSellerProvider().bestSellerData();
   }
 
   @override
@@ -152,19 +159,45 @@ class _HomeState extends State<Home> {
                 new Container(
                   margin: EdgeInsets.only(top: 20, bottom: 0),
                   height: 300,
-                  child: GridView.count(
-                    // controller: new ScrollController(keepScrollOffset: false),
-                    // shrinkWrap: true,
-                    scrollDirection: Axis.horizontal,
-                    crossAxisCount: 1,
-                    childAspectRatio: 1.6,
-                    padding: EdgeInsets.only(bottom: 10, left: 5, right: 5),
-                    children: List.generate(10, (index) {
-                      return ProductCard();
-                    }),
-                  ),
+                  child: FutureBuilder<List<BestSellerModel>>(
+                      future: bestSeller,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          if (snapshot.data.length > 0) {
+                            return GridView.count(
+                              // controller: new ScrollController(keepScrollOffset: false),
+                              // shrinkWrap: true,
+                              scrollDirection: Axis.horizontal,
+                              crossAxisCount: 1,
+                              childAspectRatio: 1.6,
+                              padding: EdgeInsets.only(
+                                  bottom: 10, left: 5, right: 5),
+                              children:
+                                  List.generate(snapshot.data.length, (index) {
+                                return ProductCard(
+                                    snapshot.data[index].productName,
+                                    snapshot.data[index].departmentName,
+                                    snapshot.data[index].price,
+                                    snapshot.data[index].rate,
+                                    snapshot.data[index].photoUrl,
+                                    snapshot.data[index].navigationUrl);
+                              }),
+                            );
+                          } else {
+                            return Center(
+                                child: Text(
+                              'No Sections yet ...',
+                              style: TextStyle(color: Colors.white),
+                            ));
+                          }
+                        }
+                        return Center(
+                            child: CircularProgressIndicator(
+                          backgroundColor: gouudBackgroundColor,
+                        ));
+                      }),
                 ),
-                NarrowCardViewAll('DAILY DEALS', viewNavigate()),
+                NarrowCardViewAll('DAILY DEALS', ''),
                 new Container(
                   child: GridView.count(
                     controller: new ScrollController(keepScrollOffset: false),
@@ -349,22 +382,29 @@ class _DailyDealsCardState extends State<DailyDealsCard> {
 }
 
 class ProductCard extends StatefulWidget {
+  final String productName;
+  final String departmentName;
+  final String price;
+  final double rate;
+  final String photoUrl;
+  final String navigationUrl;
+  ProductCard(this.productName, this.departmentName, this.price, this.rate,
+      this.photoUrl, this.navigationUrl);
   @override
   _ProductCardState createState() => _ProductCardState();
 }
 
 class _ProductCardState extends State<ProductCard> {
-  var rating = 3.0;
   @override
   Widget build(BuildContext context) {
     return Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
         child: GestureDetector(
             onTap: () {
-              // Navigator.push(
-              //     context,
-              //     MaterialPageRoute(
-              //         builder: (BuildContext context) => Product()));
+              pushNewScreen(context,
+                  screen: Product(widget.navigationUrl),
+                  platformSpecific: true,
+                  withNavBar: false);
             },
             child: Container(
               child: Column(
@@ -418,14 +458,13 @@ class _ProductCardState extends State<ProductCard> {
                             child: Padding(
                               padding: EdgeInsets.all(2),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(15.0),
-                                    topRight: Radius.circular(15.0)),
-                                child: Image(
-                                    image:
-                                        AssetImage('assets/icons/bottle1.png'),
-                                    fit: BoxFit.contain),
-                              ),
+                                  borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(15.0),
+                                      topRight: Radius.circular(15.0)),
+                                  child: new Image(
+                                    image: new NetworkImageWithRetry(
+                                        widget.photoUrl),
+                                  )),
                             ),
                           ),
                           Expanded(
@@ -435,8 +474,8 @@ class _ProductCardState extends State<ProductCard> {
                               children: <Widget>[
                                 Center(
                                     child: SmoothStarRating(
-                                  rating: rating,
-                                  isReadOnly: false,
+                                  rating: widget.rate,
+                                  isReadOnly: true,
                                   size: 20,
                                   color: gouudAppColor,
                                   borderColor: gouudAppColor,
@@ -453,7 +492,7 @@ class _ProductCardState extends State<ProductCard> {
                                 )),
                                 Center(
                                   child: Text(
-                                    'AQUA WATER 5 L',
+                                    widget.productName,
                                     style: TextStyle(fontSize: 8),
                                   ),
                                 ),
@@ -462,7 +501,7 @@ class _ProductCardState extends State<ProductCard> {
                                       MainAxisAlignment.spaceEvenly,
                                   children: <Widget>[
                                     Text(
-                                      '15 SAR',
+                                      widget.price,
                                       style: TextStyle(
                                           fontSize: 8, color: gouudAppColor),
                                     ),
@@ -545,14 +584,12 @@ class _ScrolProductsState extends State<ScrolProducts> {
             child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            NarrowCardViewAll('AQUA PRODUCTS', widget.navigate),
-            // Container(
-            //   height: 20,
-            // ),
+            Padding(
+              padding: EdgeInsets.only(bottom: 20),
+              child: NarrowCardViewAll('AQUA PRODUCTS', widget.navigate),
+            ),
             Expanded(
                 child: new Container(
-              // margin: EdgeInsets.only(top: 20, bottom: 0),
-              height: 320,
               child: GridView.count(
                 // controller: new ScrollController(keepScrollOffset: false),
                 // shrinkWrap: true,
@@ -561,7 +598,13 @@ class _ScrolProductsState extends State<ScrolProducts> {
                 childAspectRatio: 1.6,
                 padding: EdgeInsets.only(bottom: 10, left: 5, right: 5),
                 children: List.generate(10, (index) {
-                  return ProductCard();
+                  return ProductCard(
+                      'AQUA WATER 5 L',
+                      'AQWA',
+                      "20",
+                      3.5,
+                      "http://gouud.com/Files/Products/1014/20206241712495.jpg",
+                      "http://gouud.com/Api/ar/Products/Details/1014");
                 }),
               ),
             ))
@@ -647,7 +690,6 @@ class _NarrowCardState extends State<NarrowCard> {
 
 class NarrowCardViewAll extends StatefulWidget {
   final String navigate;
-
   final String text;
   NarrowCardViewAll(this.text, this.navigate);
 
@@ -742,79 +784,90 @@ class _SpecialOfferCardState extends State<SpecialOfferCard> {
   Widget build(BuildContext context) {
     return Padding(
         padding: EdgeInsets.all(10),
-        child: Container(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Expanded(
-                flex: 3,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(left: 5),
-                        child: Container(
-                          decoration: new BoxDecoration(
-                              image: new DecorationImage(
-                                  image: new AssetImage(
-                                      "assets/icons/" + widget.image),
-                                  fit: BoxFit.fill)),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                        child: Padding(
-                      padding: EdgeInsets.only(top: 10, bottom: 30, right: 10),
-                      child: offer(),
-                    ))
-                  ],
-                ),
-              ),
-              Expanded(
-                  flex: 2,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          GestureDetector(
-                            child: Text(
-                              widget.text,
-                              style: TextStyle(color: gouudWhite, fontSize: 10),
+        child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (BuildContext context) => SpecialOffers()));
+            },
+            child: Container(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Expanded(
+                    flex: 3,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 5),
+                            child: Container(
+                              decoration: new BoxDecoration(
+                                  image: new DecorationImage(
+                                      image: new AssetImage(
+                                          "assets/icons/" + widget.image),
+                                      fit: BoxFit.fill)),
                             ),
-                            onTap: () {
-                              Navigator.pushNamed(context, 'SectionProducts');
-                            },
                           ),
-                          GestureDetector(
-                              onTap: () {
-                                Navigator.pushNamed(context, 'SectionProducts');
-                              },
-                              child: Text(
-                                'Touch pointer move a lot',
-                                style: TextStyle(
-                                    color: gouudFontColor, fontSize: 8),
-                              ))
+                        ),
+                        Expanded(
+                            child: Padding(
+                          padding:
+                              EdgeInsets.only(top: 10, bottom: 30, right: 10),
+                          child: offer(),
+                        ))
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                      flex: 2,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              GestureDetector(
+                                child: Text(
+                                  widget.text,
+                                  style: TextStyle(
+                                      color: gouudWhite, fontSize: 10),
+                                ),
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                      context, 'SectionProducts');
+                                },
+                              ),
+                              GestureDetector(
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                        context, 'SectionProducts');
+                                  },
+                                  child: Text(
+                                    'Touch pointer move a lot',
+                                    style: TextStyle(
+                                        color: gouudFontColor, fontSize: 8),
+                                  ))
+                            ],
+                          ),
+                          Icon(
+                            Icons.favorite,
+                            color: gouudWhite,
+                          )
                         ],
-                      ),
-                      Icon(
-                        Icons.favorite,
-                        color: gouudWhite,
-                      )
-                    ],
-                  ))
-            ],
-          ),
-          decoration: new BoxDecoration(
-            color: gouudAppColor,
-            boxShadow: [BoxShadow(color: gouudGrey, spreadRadius: 1)],
-            borderRadius: BorderRadius.all(Radius.circular(25.0)),
-          ),
-        ));
+                      ))
+                ],
+              ),
+              decoration: new BoxDecoration(
+                color: gouudAppColor,
+                boxShadow: [BoxShadow(color: gouudGrey, spreadRadius: 1)],
+                borderRadius: BorderRadius.all(Radius.circular(25.0)),
+              ),
+            )));
   }
 
   /// button widget

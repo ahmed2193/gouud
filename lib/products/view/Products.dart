@@ -6,6 +6,7 @@ import 'package:gouud/UI_EN/constants/gouudColors.dart';
 import 'package:gouud/products/model/ProductsModel.dart';
 import 'package:gouud/products/provider/ProductsProvider.dart';
 import 'package:flutter_paginator/flutter_paginator.dart';
+import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
 
 class Products extends StatefulWidget {
   static const id = 'Products';
@@ -295,11 +296,10 @@ class _ProductCardState extends State<ProductCard> {
                       ),
                       child: GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (BuildContext context) =>
-                                        Product(widget.item.navigationUrl)));
+                            pushNewScreen(context,
+                                screen: Product(widget.item.navigationUrl),
+                                platformSpecific: true,
+                                withNavBar: false);
                           },
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,

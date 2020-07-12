@@ -5,4 +5,16 @@ class ProductRequest {
     print(url);
     return http.get(url);
   }
+
+  Future<http.Response> addToCart(
+      String productId, String quantity, String _token) {
+    return http.post(
+      "http://gouud.com/api/ar/Cart/AddOrder",
+      body: {
+        'ProductID': "$productId",
+        'Quantity': "$quantity",
+      },
+      headers: {"Authorization": "Bearer $_token"},
+    );
+  }
 }

@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:gouud/UI_EN/constants/BarContent.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:gouud/UI_EN/constants/gouudColors.dart';
+import 'package:gouud/product/view/Product.dart';
 import 'package:gouud/products/view/Products.dart';
 import 'package:gouud/sectionProducts/model/BestSellerModel.dart';
 import 'package:gouud/sectionProducts/model/SectionProductsModel.dart';
 import 'package:gouud/sectionProducts/provider/BestSellerProvider.dart';
 import 'package:gouud/sectionProducts/provider/SectionProductsProvider.dart';
+import 'package:gouud/specialOffers/view/SpecialOffers.dart';
+import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
 import 'package:flutter_image/network.dart';
 
@@ -175,7 +178,7 @@ class _SectionProductsState extends State<SectionProducts> {
                               // shrinkWrap: true,
                               scrollDirection: Axis.horizontal,
                               crossAxisCount: 1,
-                              childAspectRatio: 1.6,
+                              childAspectRatio: 1.7,
                               padding: EdgeInsets.only(
                                   bottom: 10, left: 5, right: 5),
                               children:
@@ -431,10 +434,10 @@ class _ProductCardState extends State<ProductCard> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
         child: GestureDetector(
             onTap: () {
-              // Navigator.push(
-              //     context,
-              //     MaterialPageRoute(
-              //         builder: (BuildContext context) => Product()));
+              pushNewScreen(context,
+                  screen: Product(widget.navigationUrl),
+                  platformSpecific: true,
+                  withNavBar: false);
             },
             child: Container(
               child: Column(
@@ -616,8 +619,11 @@ class _ScrolProductsState extends State<ScrolProducts> {
             child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            NarrowCardViewAll(
-                widget.brandName + ' PRODUCTS', widget.viewAllUrl),
+            Padding(
+              padding: EdgeInsets.only(bottom: 20),
+              child: NarrowCardViewAll(
+                  widget.brandName + ' PRODUCTS', widget.viewAllUrl),
+            ),
             // Container(
             //   height: 20,
             // ),
@@ -891,79 +897,90 @@ class _SpecialOfferCardState extends State<SpecialOfferCard> {
   Widget build(BuildContext context) {
     return Padding(
         padding: EdgeInsets.all(10),
-        child: Container(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Expanded(
-                flex: 3,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: Padding(
-                        padding: EdgeInsets.only(left: 5),
-                        child: Container(
-                          decoration: new BoxDecoration(
-                              image: new DecorationImage(
-                                  image: new AssetImage(
-                                      "assets/icons/" + widget.image),
-                                  fit: BoxFit.fill)),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                        child: Padding(
-                      padding: EdgeInsets.only(top: 10, bottom: 30, right: 10),
-                      child: offer(),
-                    ))
-                  ],
-                ),
-              ),
-              Expanded(
-                  flex: 2,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          GestureDetector(
-                            child: Text(
-                              widget.text,
-                              style: TextStyle(color: gouudWhite, fontSize: 10),
+        child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (BuildContext context) => SpecialOffers()));
+            },
+            child: Container(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Expanded(
+                    flex: 3,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(left: 5),
+                            child: Container(
+                              decoration: new BoxDecoration(
+                                  image: new DecorationImage(
+                                      image: new AssetImage(
+                                          "assets/icons/" + widget.image),
+                                      fit: BoxFit.fill)),
                             ),
-                            onTap: () {
-                              Navigator.pushNamed(context, 'SectionProducts');
-                            },
                           ),
-                          GestureDetector(
-                              onTap: () {
-                                Navigator.pushNamed(context, 'SectionProducts');
-                              },
-                              child: Text(
-                                'Touch pointer move a lot',
-                                style: TextStyle(
-                                    color: gouudFontColor, fontSize: 8),
-                              ))
+                        ),
+                        Expanded(
+                            child: Padding(
+                          padding:
+                              EdgeInsets.only(top: 10, bottom: 30, right: 10),
+                          child: offer(),
+                        ))
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                      flex: 2,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              GestureDetector(
+                                child: Text(
+                                  widget.text,
+                                  style: TextStyle(
+                                      color: gouudWhite, fontSize: 10),
+                                ),
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                      context, 'SectionProducts');
+                                },
+                              ),
+                              GestureDetector(
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                        context, 'SectionProducts');
+                                  },
+                                  child: Text(
+                                    'Touch pointer move a lot',
+                                    style: TextStyle(
+                                        color: gouudFontColor, fontSize: 8),
+                                  ))
+                            ],
+                          ),
+                          Icon(
+                            Icons.favorite,
+                            color: gouudWhite,
+                          )
                         ],
-                      ),
-                      Icon(
-                        Icons.favorite,
-                        color: gouudWhite,
-                      )
-                    ],
-                  ))
-            ],
-          ),
-          decoration: new BoxDecoration(
-            color: gouudAppColor,
-            boxShadow: [BoxShadow(color: gouudGrey, spreadRadius: 1)],
-            borderRadius: BorderRadius.all(Radius.circular(25.0)),
-          ),
-        ));
+                      ))
+                ],
+              ),
+              decoration: new BoxDecoration(
+                color: gouudAppColor,
+                boxShadow: [BoxShadow(color: gouudGrey, spreadRadius: 1)],
+                borderRadius: BorderRadius.all(Radius.circular(25.0)),
+              ),
+            )));
   }
 
   /// button widget
