@@ -114,7 +114,7 @@ class _SectionsState extends State<Sections> {
                               return CardItemSection(
                                   snapshot.data[index].name,
                                   snapshot.data[index].photoUrl,
-                                  snapshot.data[index].navigationUrl);
+                                  snapshot.data[index].brandsUrl);
                             }),
                           ),
                         );

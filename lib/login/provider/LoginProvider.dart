@@ -12,9 +12,10 @@ class LoginProvider with ChangeNotifier {
     final response = await LoginRequest().getToken(email, password);
     code = response.statusCode.toString();
     print(code);
-    if (code == '200') {
+    if (code == '201') {
       data = LoginModel.fromJson(json.decode(response.body));
-      _saveToken(data.accessToken);
+      _saveToken(data.data.token);
+      _saveEntered();
     }
   }
 
@@ -25,5 +26,12 @@ class LoginProvider with ChangeNotifier {
     var value = token;
     print(token);
     prefs.setString(key, value);
+  }
+
+  _saveEntered() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'Inner';
+    var value = true;
+    prefs.setBool(key, value);
   }
 }

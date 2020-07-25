@@ -1,7 +1,8 @@
 import 'package:http/http.dart' as http;
 
-class SectionRequest {
-  Future<http.Response> records() {
-    return http.get("http://plstka.brideselection.com/api/city/records");
+class CartRequest {
+  Future<http.Response> records(String _token) {
+    return http.get("http://gouud.com/api/ar/Cart/Index?Pageno=0&size=10",
+        headers: {"Authorization": "Bearer $_token"});
   }
 }

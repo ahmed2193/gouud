@@ -518,7 +518,7 @@ class _ProgressButtonState extends State<ProgressButton>
       LoginProvider login = new LoginProvider();
       login.getToken(logic.email, logic.password).whenComplete(() {
         setState(() {
-          if (login.code == "200") {
+          if (login.code == "201") {
             _state = 2;
             Timer(new Duration(milliseconds: 500), () {
               Navigator.pushReplacement(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gouud/UI_EN/SelectLanguage.dart';
+import 'package:gouud/UI_EN/bottomHandler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   static const id = 'SplashScreen';
@@ -13,7 +15,14 @@ class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   _goToHomepage(BuildContext context) async {
     await Future.delayed(Duration(seconds: 0));
-    Navigator.pushNamedAndRemoveUntil(context, SelectLanguage.id, (r) => false);
+    final prefs = await SharedPreferences.getInstance();
+    if ((prefs.getBool('Inner') ?? false)) {
+      Navigator.pushNamedAndRemoveUntil(
+          context, BottomHandler.id, (r) => false);
+    } else {
+      Navigator.pushNamedAndRemoveUntil(
+          context, SelectLanguage.id, (r) => false);
+    }
   }
 
   @override

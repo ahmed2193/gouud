@@ -54,8 +54,8 @@ final List<Widget> imageSliders = imageList
 
 class SectionProducts extends StatefulWidget {
   static const id = 'SectionProducts';
-  final String url;
-  SectionProducts(this.url);
+  final String departmentId;
+  SectionProducts(this.departmentId);
   @override
   _SectionProductsState createState() => _SectionProductsState();
 }
@@ -68,13 +68,14 @@ class _SectionProductsState extends State<SectionProducts> {
     ['erwaa-٢٤.png', 'COMPANY OFFER'],
   ];
 
-  Future<List<BestSellerModel>> bestSeller;
-  Future<List<SectionProductsModel>> sectionProducts;
+  Future<BestSellerModel> bestSeller;
+  Future<SectionProductsModel> sectionProducts;
   @override
   void initState() {
     super.initState();
     bestSeller = BestSellerProvider().bestSellerData();
-    sectionProducts = SectionProductsProvider().sectionProductsData(widget.url);
+    sectionProducts =
+        SectionProductsProvider().sectionProductsData(widget.departmentId);
     print(sectionProducts);
   }
 
@@ -168,11 +169,11 @@ class _SectionProductsState extends State<SectionProducts> {
                 new Container(
                   margin: EdgeInsets.only(top: 20, bottom: 0),
                   height: 300,
-                  child: FutureBuilder<List<BestSellerModel>>(
+                  child: FutureBuilder<BestSellerModel>(
                       future: bestSeller,
                       builder: (context, snapshot) {
                         if (snapshot.hasData) {
-                          if (snapshot.data.length > 0) {
+                          if (snapshot.data.data.length > 0) {
                             return GridView.count(
                               // controller: new ScrollController(keepScrollOffset: false),
                               // shrinkWrap: true,
@@ -181,15 +182,16 @@ class _SectionProductsState extends State<SectionProducts> {
                               childAspectRatio: 1.7,
                               padding: EdgeInsets.only(
                                   bottom: 10, left: 5, right: 5),
-                              children:
-                                  List.generate(snapshot.data.length, (index) {
+                              children: List.generate(snapshot.data.data.length,
+                                  (index) {
                                 return ProductCard(
-                                    snapshot.data[index].productName,
-                                    snapshot.data[index].departmentName,
-                                    snapshot.data[index].price,
-                                    snapshot.data[index].rate,
-                                    snapshot.data[index].photoUrl,
-                                    snapshot.data[index].navigationUrl);
+                                    snapshot.data.data[index].nameEn,
+                                    snapshot.data.data[index].brand.department
+                                        .nameEn,
+                                    snapshot.data.data[index].price,
+                                    snapshot.data.data[index].rate,
+                                    snapshot.data.data[index].images[0].image,
+                                    snapshot.data.data[index].id.toString());
                               }),
                             );
                           } else {
@@ -223,11 +225,11 @@ class _SectionProductsState extends State<SectionProducts> {
                   ),
                 ),
                 new Container(
-                  child: FutureBuilder<List<SectionProductsModel>>(
+                  child: FutureBuilder<SectionProductsModel>(
                       future: sectionProducts,
                       builder: (context, snapshot) {
                         if (snapshot.hasData) {
-                          if (snapshot.data.length > 0) {
+                          if (snapshot.data.data.length > 0) {
                             return GridView.count(
                               controller:
                                   new ScrollController(keepScrollOffset: false),
@@ -238,12 +240,13 @@ class _SectionProductsState extends State<SectionProducts> {
                               padding: EdgeInsets.only(
                                   bottom: 20, left: 0, right: 0, top: 10),
                               // mainAxisSpacing: 10,
-                              children:
-                                  List.generate(snapshot.data.length, (index) {
+                              children: List.generate(snapshot.data.data.length,
+                                  (index) {
                                 return ScrolProducts(
-                                    snapshot.data[index].brandName,
-                                    snapshot.data[index].viewAllUrl,
-                                    snapshot.data[index].productsCards);
+                                    snapshot.data.data[index].nameEn,
+                                    snapshot.data.data[index].id.toString(),
+                                    snapshot.data.data[index].department.nameEn,
+                                    snapshot.data.data[index].product);
                               }),
                             );
                           } else {
@@ -603,8 +606,10 @@ class _ProductCardState extends State<ProductCard> {
 class ScrolProducts extends StatefulWidget {
   final String brandName;
   final String viewAllUrl;
-  final List<ProductsCards> productsCards;
-  ScrolProducts(this.brandName, this.viewAllUrl, this.productsCards);
+  final String department;
+  final List<ProductsData> productsCards;
+  ScrolProducts(
+      this.brandName, this.viewAllUrl, this.department, this.productsCards);
   @override
   _ScrolProductsState createState() => _ScrolProductsState();
 }
@@ -640,12 +645,12 @@ class _ScrolProductsState extends State<ScrolProducts> {
                 padding: EdgeInsets.only(bottom: 10, left: 5, right: 5),
                 children: List.generate(widget.productsCards.length, (index) {
                   return ProductCard(
-                      widget.productsCards[index].productName,
-                      widget.productsCards[index].departmentName,
+                      widget.productsCards[index].nameEn,
+                      widget.department,
                       widget.productsCards[index].price,
                       widget.productsCards[index].rate,
-                      widget.productsCards[index].photoUrl,
-                      widget.productsCards[index].navigationUrl);
+                      widget.productsCards[index].images[0].image,
+                      widget.productsCards[index].id.toString());
                 }),
               ),
             ))

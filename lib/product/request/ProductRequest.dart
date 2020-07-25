@@ -9,7 +9,7 @@ class ProductRequest {
   Future<http.Response> addToCart(
       String productId, String quantity, String _token) {
     return http.post(
-      "http://gouud.com/api/ar/Cart/AddOrder",
+      "http://gouud.com/api/ar/Cart/AddProduct",
       body: {
         'ProductID': "$productId",
         'Quantity': "$quantity",

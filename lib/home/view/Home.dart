@@ -4,6 +4,8 @@ import 'package:flutter_image/network.dart';
 import 'package:gouud/UI_EN/constants/BarContent.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:gouud/UI_EN/constants/gouudColors.dart';
+import 'package:gouud/home/model/HomeModel.dart';
+import 'package:gouud/home/provider/HomeProvider.dart';
 import 'package:gouud/product/view/Product.dart';
 import 'package:gouud/sectionProducts/model/BestSellerModel.dart';
 import 'package:gouud/sectionProducts/provider/BestSellerProvider.dart';
@@ -63,10 +65,12 @@ class _HomeState extends State<Home> {
   ];
 
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  Future<List<BestSellerModel>> bestSeller;
+  Future<BestSellerModel> bestSeller;
+  Future<HomeModel> homeData;
   void initState() {
     super.initState();
     bestSeller = BestSellerProvider().bestSellerData();
+    homeData = HomeProvider().homeData();
   }
 
   @override
@@ -159,11 +163,11 @@ class _HomeState extends State<Home> {
                 new Container(
                   margin: EdgeInsets.only(top: 20, bottom: 0),
                   height: 300,
-                  child: FutureBuilder<List<BestSellerModel>>(
+                  child: FutureBuilder<BestSellerModel>(
                       future: bestSeller,
                       builder: (context, snapshot) {
                         if (snapshot.hasData) {
-                          if (snapshot.data.length > 0) {
+                          if (snapshot.data.data.length > 0) {
                             return GridView.count(
                               // controller: new ScrollController(keepScrollOffset: false),
                               // shrinkWrap: true,
@@ -172,21 +176,22 @@ class _HomeState extends State<Home> {
                               childAspectRatio: 1.6,
                               padding: EdgeInsets.only(
                                   bottom: 10, left: 5, right: 5),
-                              children:
-                                  List.generate(snapshot.data.length, (index) {
+                              children: List.generate(snapshot.data.data.length,
+                                  (index) {
                                 return ProductCard(
-                                    snapshot.data[index].productName,
-                                    snapshot.data[index].departmentName,
-                                    snapshot.data[index].price,
-                                    snapshot.data[index].rate,
-                                    snapshot.data[index].photoUrl,
-                                    snapshot.data[index].navigationUrl);
+                                    snapshot.data.data[index].nameEn,
+                                    snapshot.data.data[index].brand.department
+                                        .nameEn,
+                                    snapshot.data.data[index].price,
+                                    snapshot.data.data[index].rate,
+                                    snapshot.data.data[index].images[0].image,
+                                    snapshot.data.data[index].id.toString());
                               }),
                             );
                           } else {
                             return Center(
                                 child: Text(
-                              'No Sections yet ...',
+                              'No best seller yet ...',
                               style: TextStyle(color: Colors.white),
                             ));
                           }
@@ -214,19 +219,44 @@ class _HomeState extends State<Home> {
                   ),
                 ),
                 new Container(
-                  child: GridView.count(
-                    controller: new ScrollController(keepScrollOffset: false),
-                    shrinkWrap: true,
-                    // scrollDirection: Axis.vertical,
-                    crossAxisCount: 1,
-                    childAspectRatio: 1,
-                    padding:
-                        EdgeInsets.only(bottom: 20, left: 0, right: 0, top: 10),
-                    // mainAxisSpacing: 10,
-                    children: List.generate(4, (index) {
-                      return ScrolProducts('Products');
-                    }),
-                  ),
+                  child: FutureBuilder<HomeModel>(
+                      future: homeData,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          if (snapshot.data.data.length > 0) {
+                            return GridView.count(
+                              controller:
+                                  new ScrollController(keepScrollOffset: false),
+                              shrinkWrap: true,
+                              // scrollDirection: Axis.vertical,
+                              crossAxisCount: 1,
+                              childAspectRatio: 1,
+                              padding: EdgeInsets.only(
+                                  bottom: 20, left: 0, right: 0, top: 10),
+                              // mainAxisSpacing: 10,
+                              children: List.generate(snapshot.data.data.length,
+                                  (index) {
+                                return ScrolProducts(
+                                    snapshot.data.data[index].nameEn,
+                                    snapshot.data.data[index].id.toString(),
+                                    snapshot.data.data[index].department.nameEn,
+                                    snapshot.data.data[index].productData);
+                              }),
+                            );
+                          } else {
+                            /////
+                            return Center(
+                                child: Text(
+                              'No Sections yet ...',
+                              style: TextStyle(color: Colors.white),
+                            ));
+                          }
+                        }
+                        return Center(
+                            child: CircularProgressIndicator(
+                          backgroundColor: gouudBackgroundColor,
+                        ));
+                      }),
                 ),
                 NarrowCard(),
                 new Container(
@@ -568,8 +598,12 @@ class _ProductCardState extends State<ProductCard> {
 }
 
 class ScrolProducts extends StatefulWidget {
-  final String navigate;
-  ScrolProducts(this.navigate);
+  final String brandName;
+  final String viewAllUrl;
+  final String department;
+  final List<ProductData> productsCards;
+  ScrolProducts(
+      this.brandName, this.viewAllUrl, this.department, this.productsCards);
   @override
   _ScrolProductsState createState() => _ScrolProductsState();
 }
@@ -586,10 +620,16 @@ class _ScrolProductsState extends State<ScrolProducts> {
           children: <Widget>[
             Padding(
               padding: EdgeInsets.only(bottom: 20),
-              child: NarrowCardViewAll('AQUA PRODUCTS', widget.navigate),
+              child: NarrowCardViewAll(
+                  widget.brandName + ' PRODUCTS', widget.viewAllUrl),
             ),
+            // Container(
+            //   height: 20,
+            // ),
             Expanded(
                 child: new Container(
+              // margin: EdgeInsets.only(top: 20, bottom: 0),
+              height: 320,
               child: GridView.count(
                 // controller: new ScrollController(keepScrollOffset: false),
                 // shrinkWrap: true,
@@ -597,14 +637,14 @@ class _ScrolProductsState extends State<ScrolProducts> {
                 crossAxisCount: 1,
                 childAspectRatio: 1.6,
                 padding: EdgeInsets.only(bottom: 10, left: 5, right: 5),
-                children: List.generate(10, (index) {
+                children: List.generate(widget.productsCards.length, (index) {
                   return ProductCard(
-                      'AQUA WATER 5 L',
-                      'AQWA',
-                      "20",
-                      3.5,
-                      "http://gouud.com/Files/Products/1014/20206241712495.jpg",
-                      "http://gouud.com/Api/ar/Products/Details/1014");
+                      widget.productsCards[index].nameEn,
+                      widget.department,
+                      widget.productsCards[index].price,
+                      widget.productsCards[index].rate,
+                      widget.productsCards[index].images[0].image,
+                      widget.productsCards[index].id.toString());
                 }),
               ),
             ))

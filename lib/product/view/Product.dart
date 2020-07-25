@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_image/network.dart';
 import 'package:gouud/UI_EN/constants/BarContent.dart';
 import 'package:gouud/UI_EN/constants/gouudColors.dart';
+import 'package:gouud/login/view/Login.dart';
 import 'package:gouud/product/model/ProductModel.dart';
 import 'package:gouud/product/provider/ProductProvider.dart';
 import 'package:gouud/sectionProducts/model/BestSellerModel.dart';
@@ -23,7 +24,7 @@ class _ProductState extends State<Product> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   ProductProvider productObj;
   Future<ProductModel> productModel;
-  Future<List<BestSellerModel>> bestSeller;
+  Future<BestSellerModel> bestSeller;
   int productId;
   int quantity;
   int stateIndicator = 0;
@@ -59,14 +60,23 @@ class _ProductState extends State<Product> {
         print('done');
         Toast.show("Product has added to cart", context,
             duration: 4, gravity: Toast.BOTTOM);
-      } else {
+      } else if (productObj.statusCode == '401') {
         Toast.show(
-          "server error, please try again later ",
+          "Please login to continue",
           context,
           duration: 4,
           gravity: Toast.BOTTOM,
         );
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (BuildContext context) => Login()));
         print('failed');
+      } else {
+        Toast.show(
+          "server error please try later ",
+          context,
+          duration: 4,
+          gravity: Toast.BOTTOM,
+        );
       }
     });
   }
@@ -162,11 +172,11 @@ class _ProductState extends State<Product> {
                               // padding: EdgeInsets.only(bottom: 50),
                               margin: EdgeInsets.only(top: 20, bottom: 60),
                               height: 300,
-                              child: FutureBuilder<List<BestSellerModel>>(
+                              child: FutureBuilder<BestSellerModel>(
                                   future: bestSeller,
                                   builder: (context, snapshot) {
                                     if (snapshot.hasData) {
-                                      if (snapshot.data.length > 0) {
+                                      if (snapshot.data.data.length > 0) {
                                         return GridView.count(
                                           // controller: new ScrollController(keepScrollOffset: false),
                                           // shrinkWrap: true,
@@ -176,17 +186,19 @@ class _ProductState extends State<Product> {
                                           padding: EdgeInsets.only(
                                               bottom: 10, left: 5, right: 5),
                                           children: List.generate(
-                                              snapshot.data.length, (index) {
+                                              snapshot.data.data.length,
+                                              (index) {
                                             return ProductCard(
                                                 snapshot
-                                                    .data[index].productName,
-                                                snapshot
-                                                    .data[index].departmentName,
-                                                snapshot.data[index].price,
-                                                snapshot.data[index].rate,
-                                                snapshot.data[index].photoUrl,
-                                                snapshot
-                                                    .data[index].navigationUrl);
+                                                    .data.data[index].nameEn,
+                                                snapshot.data.data[index].brand
+                                                    .department.nameEn,
+                                                snapshot.data.data[index].price,
+                                                snapshot.data.data[index].rate,
+                                                snapshot.data.data[index]
+                                                    .images[0].image,
+                                                snapshot.data.data[index].id
+                                                    .toString());
                                           }),
                                         );
                                       } else {
@@ -250,7 +262,7 @@ class CardItemSection extends StatefulWidget {
 }
 
 class _CardItemSectionState extends State<CardItemSection> {
-  int count = 0;
+  int count = 1;
   int productPrice = 0;
   void initState() {
     super.initState();
@@ -267,7 +279,7 @@ class _CardItemSectionState extends State<CardItemSection> {
   }
 
   _decrement() {
-    if (count > 0) {
+    if (count > 1) {
       setState(() {
         count = count - 1;
         productPrice = int.parse(widget.data.productPrice);

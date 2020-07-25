@@ -8,15 +8,17 @@ class Logic {
   String mobile;
   String password;
   String confirmPassword;
+  String countryId;
   String statusCode;
 
   Map<String, String> validation(
-      name, email, mobile, password, confirmPassword) {
+      name, email, mobile, password, confirmPassword, countryId) {
     this.name = name;
     this.email = email;
     this.mobile = mobile;
     this.password = password;
     this.confirmPassword = confirmPassword;
+    this.countryId = countryId;
 
     Map<String, String> result = {};
     String emailValid = regValidatation(email, emailPattern);

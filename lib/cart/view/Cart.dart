@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_image/network.dart';
 import 'package:gouud/UI_EN/constants/gouudColors.dart';
+import 'package:gouud/cart/model/CartModel.dart';
+import 'package:gouud/cart/provider/CartProvider.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
 import 'package:gouud/UI_EN/constants/BarContent.dart';
 
@@ -10,6 +13,7 @@ class Cart extends StatefulWidget {
 }
 
 class _CartState extends State<Cart> {
+  Future<List<CartModel>> productsCart;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   var rating = 3.0;
   int stateIndicator = 0;
@@ -17,6 +21,7 @@ class _CartState extends State<Cart> {
   @override
   void initState() {
     super.initState();
+    productsCart = CartProvider().cartData();
     page = Cart.id;
   }
 
@@ -41,19 +46,41 @@ class _CartState extends State<Cart> {
           ),
           ListView(
               padding:
-                  EdgeInsets.only(bottom: 70, left: 20, right: 20, top: 20),
+                  EdgeInsets.only(bottom: 120, left: 20, right: 20, top: 20),
               children: <Widget>[
                 new Container(
-                  child: GridView.count(
-                    controller: new ScrollController(keepScrollOffset: false),
-                    shrinkWrap: true,
-                    crossAxisCount: 1,
-                    childAspectRatio: 2.5,
-                    mainAxisSpacing: 10,
-                    children: List.generate(5, (index) {
-                      return CardItemSection();
-                    }),
-                  ),
+                  child: FutureBuilder<List<CartModel>>(
+                      future: productsCart,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          if (snapshot.data.length > 0) {
+                            return GridView.count(
+                              controller:
+                                  new ScrollController(keepScrollOffset: false),
+                              shrinkWrap: true,
+                              crossAxisCount: 1,
+                              childAspectRatio: 2.5,
+                              mainAxisSpacing: 10,
+                              children:
+                                  List.generate(snapshot.data.length, (index) {
+                                return CardItemSection(snapshot.data[index]);
+                              }),
+                            );
+                          } else {
+                            return Center(
+                                child: Text(
+                              'No items yet ...',
+                              style: TextStyle(color: Colors.white),
+                            ));
+                          }
+                        }
+                        return Container(
+                            height: 300,
+                            child: Center(
+                                child: CircularProgressIndicator(
+                              backgroundColor: gouudBackgroundColor,
+                            )));
+                      }),
                 ),
                 location(),
                 ratting(),
@@ -69,19 +96,21 @@ class _CartState extends State<Cart> {
   }
 
   Widget gouudFloatingButton() {
-    return new FloatingActionButton.extended(
-        icon: stateIndicator == 0
-            ? Icon(
-                Icons.monetization_on,
-                color: gouudWhite,
-              )
-            : CircularProgressIndicator(
-                strokeWidth: 2,
-                backgroundColor: gouudBackgroundColor,
-              ),
-        label: Text("Pay"),
-        backgroundColor: gouudAppColor,
-        onPressed: () {});
+    return new Padding(
+        padding: EdgeInsets.only(bottom: 20),
+        child: FloatingActionButton.extended(
+            icon: stateIndicator == 0
+                ? Icon(
+                    Icons.monetization_on,
+                    color: gouudWhite,
+                  )
+                : CircularProgressIndicator(
+                    strokeWidth: 2,
+                    backgroundColor: gouudBackgroundColor,
+                  ),
+            label: Text("Pay"),
+            backgroundColor: gouudAppColor,
+            onPressed: () {}));
   }
 
   Widget location() {
@@ -307,12 +336,17 @@ class _CartState extends State<Cart> {
 }
 
 class CardItemSection extends StatefulWidget {
+  final CartModel data;
+  CardItemSection(this.data);
   @override
   _CardItemSectionState createState() => _CardItemSectionState();
 }
 
 class _CardItemSectionState extends State<CardItemSection> {
   var rating = 3.0;
+  int quantity = 0;
+  int totalPrice = 0;
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -345,7 +379,8 @@ class _CardItemSectionState extends State<CardItemSection> {
                             child: Padding(
                               padding: EdgeInsets.all(5),
                               child: Image(
-                                  image: AssetImage('assets/icons/bottle1.png'),
+                                  image: new NetworkImageWithRetry(
+                                      widget.data.productPhotoUrl),
                                   fit: BoxFit.contain),
                             )),
                       );
@@ -359,7 +394,7 @@ class _CardItemSectionState extends State<CardItemSection> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          'CYLINDER HEAD 2020',
+                          widget.data.productName,
                           style: TextStyle(color: gouudAppColor, fontSize: 14),
                           textAlign: TextAlign.center,
                         ),
@@ -372,7 +407,7 @@ class _CardItemSectionState extends State<CardItemSection> {
                                 height: 30,
                                 child: Center(
                                   child: Text(
-                                    'PARTS',
+                                    widget.data.departmentName,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                         color: gouudWhite, fontSize: 10),
@@ -396,20 +431,27 @@ class _CardItemSectionState extends State<CardItemSection> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: <Widget>[
-                                    Icon(
-                                      Icons.remove_circle,
-                                      color: gouudBackgroundColor,
+                                    GestureDetector(
+                                      // onTap: _decrement,
+                                      child: Icon(
+                                        Icons.remove_circle,
+                                        color: gouudBackgroundColor,
+                                      ),
                                     ),
                                     Text(
-                                      "1",
+                                      quantity == 0
+                                          ? widget.data.quantity.toString()
+                                          : quantity.toString(),
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                           color: gouudWhite, fontSize: 12),
                                     ),
-                                    Icon(
-                                      Icons.add_circle,
-                                      color: gouudBackgroundColor,
-                                    )
+                                    GestureDetector(
+                                        onTap: () {},
+                                        child: Icon(
+                                          Icons.add_circle,
+                                          color: gouudBackgroundColor,
+                                        ))
                                   ],
                                 ))
                           ],
@@ -422,7 +464,7 @@ class _CardItemSectionState extends State<CardItemSection> {
                                 height: 30,
                                 child: Center(
                                   child: Text(
-                                    '2500 LE',
+                                    widget.data.totalPrice.toString(),
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                         color: gouudWhite, fontSize: 10),
@@ -443,10 +485,10 @@ class _CardItemSectionState extends State<CardItemSection> {
                             Expanded(
                               flex: 3,
                               child: Container(
-                                height: 30,
+                                height: 40,
                                 child: Center(
                                   child: Text(
-                                    'MANSOUR PLUS',
+                                    widget.data.productName,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                         color: gouudWhite, fontSize: 10),
