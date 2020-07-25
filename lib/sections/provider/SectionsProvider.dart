@@ -37,7 +37,7 @@ class SectionsProvider with ChangeNotifier {
 
   Future<bool> fetchSections() async {
     await SectionRequest().records().then((data) {
-      if (data.statusCode == 200) {
+      if (data.statusCode == 201) {
         setSections(SectionsModel.fromJson(json.decode(data.body)));
       } else {
         Map<String, dynamic> result = json.decode(data.body);
@@ -52,11 +52,9 @@ class SectionsProvider with ChangeNotifier {
     return sections != null ? true : false;
   }
 
-  Future<List<SectionsModel>> sectionsData() async {
+  Future<SectionsModel> sectionsData() async {
     final response = await SectionRequest().records();
     // return SectionsModel.fromJson(json.decode(response.body));
-    return (json.decode(response.body) as List)
-        .map((i) => SectionsModel.fromJson(i))
-        .toList();
+    return SectionsModel.fromJson(json.decode(response.body));
   }
 }

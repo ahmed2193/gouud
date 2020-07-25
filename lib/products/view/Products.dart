@@ -10,8 +10,9 @@ import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
 
 class Products extends StatefulWidget {
   static const id = 'Products';
-  final String url;
-  Products(this.url);
+  final String brandId;
+  final String brandName;
+  Products(this.brandId, this.brandName);
   @override
   _ProductsState createState() => _ProductsState();
 }
@@ -24,7 +25,7 @@ class _ProductsState extends State<Products> {
   @override
   void initState() {
     super.initState();
-    proObj = ProductsProvider(widget.url);
+    proObj = ProductsProvider(widget.brandId);
   }
 
   @override
@@ -84,11 +85,14 @@ class _ProductsState extends State<Products> {
                         fit: BoxFit.cover)),
               ),
               ListView(children: <Widget>[
+                new Center(
+                  child: Text(widget.brandName),
+                ),
                 new Container(
                   child: Paginator.gridView(
                     shrinkWrap: true,
                     padding: EdgeInsets.only(
-                        bottom: 10, left: 10, right: 10, top: 10),
+                        bottom: 55, left: 10, right: 10, top: 10),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         childAspectRatio: 0.7,
@@ -170,7 +174,7 @@ class MyBehavior extends ScrollBehavior {
 }
 
 class ProductCard extends StatefulWidget {
-  final ProductsCards item;
+  final Data item;
   ProductCard(this.item);
   @override
   _ProductCardState createState() => _ProductCardState();
@@ -207,7 +211,7 @@ class _ProductCardState extends State<ProductCard> {
                               height: 25,
                               child: Center(
                                   child: Text(
-                                '-35%',
+                                widget.item.discount + '%',
                                 style: TextStyle(color: gouudWhite),
                                 textAlign: TextAlign.center,
                               )),
@@ -234,7 +238,7 @@ class _ProductCardState extends State<ProductCard> {
                               topRight: Radius.circular(15.0)),
                           child: Image(
                               image: new NetworkImageWithRetry(
-                                  widget.item.photoUrl),
+                                  widget.item.images[0].image),
                               fit: BoxFit.contain),
                         ),
                       ),
@@ -245,7 +249,7 @@ class _ProductCardState extends State<ProductCard> {
                           children: <Widget>[
                             Center(
                               child: Text(
-                                widget.item.productName,
+                                widget.item.nameEn,
                                 style: TextStyle(fontSize: 8),
                               ),
                             ),
@@ -297,7 +301,7 @@ class _ProductCardState extends State<ProductCard> {
                       child: GestureDetector(
                           onTap: () {
                             pushNewScreen(context,
-                                screen: Product(widget.item.navigationUrl),
+                                screen: Product(widget.item.id.toString()),
                                 platformSpecific: true,
                                 withNavBar: false);
                           },

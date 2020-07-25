@@ -1,12 +1,15 @@
 import 'package:carousel_slider/carousel_options.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image/network.dart';
+import 'package:gouud/bestSeller/view/BestSeller.dart';
 import 'package:gouud/UI_EN/constants/BarContent.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:gouud/UI_EN/constants/gouudColors.dart';
 import 'package:gouud/home/model/HomeModel.dart';
+import 'package:gouud/home/model/adverisementModel.dart';
 import 'package:gouud/home/provider/HomeProvider.dart';
 import 'package:gouud/product/view/Product.dart';
+import 'package:gouud/products/view/Products.dart';
 import 'package:gouud/sectionProducts/model/BestSellerModel.dart';
 import 'package:gouud/sectionProducts/provider/BestSellerProvider.dart';
 import 'package:gouud/specialOffers/view/SpecialOffers.dart';
@@ -17,39 +20,6 @@ final List<String> imageList = [
   "assets/icons/slide2.png",
   "assets/icons/slide3.png",
 ];
-
-int _current = 0;
-final List<Widget> imageSliders = imageList
-    .map((item) => Container(
-          child: Container(
-            margin: EdgeInsets.all(5.0),
-            child: ClipRRect(
-                borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                child: Stack(
-                  children: <Widget>[
-                    Image.asset(item, fit: BoxFit.cover, width: 1000.0),
-                    Positioned(
-                      bottom: 0.0,
-                      left: 0.0,
-                      right: 0.0,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Color.fromARGB(200, 0, 0, 0),
-                              Color.fromARGB(0, 0, 0, 0)
-                            ],
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )),
-          ),
-        ))
-    .toList();
 
 class Home extends StatefulWidget {
   static const id = 'Home';
@@ -67,10 +37,12 @@ class _HomeState extends State<Home> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   Future<BestSellerModel> bestSeller;
   Future<HomeModel> homeData;
+  Future<AdverisementModel> adverisements;
   void initState() {
     super.initState();
     bestSeller = BestSellerProvider().bestSellerData();
     homeData = HomeProvider().homeData();
+    adverisements = HomeProvider().advertisement();
   }
 
   @override
@@ -129,37 +101,26 @@ class _HomeState extends State<Home> {
                         fit: BoxFit.cover)),
               ),
               ListView(children: <Widget>[
-                CarouselSlider(
-                  items: imageSliders,
-                  options: CarouselOptions(
-                      autoPlay: true,
-                      enlargeCenterPage: true,
-                      aspectRatio: 3.0,
-                      onPageChanged: (index, reason) {
-                        setState(() {
-                          _current = index;
-                        });
-                      }),
-                ),
-                new Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: imageList.map((url) {
-                    int index = imageList.indexOf(url);
-                    return Container(
-                      width: 8.0,
-                      height: 8.0,
-                      margin:
-                          EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _current == index
-                            ? gouudAppColor
-                            : gouudBackgroundColor,
-                      ),
-                    );
-                  }).toList(),
-                ),
-                NarrowCardViewAll('BEST SELLER', 'BestSeller'),
+                FutureBuilder<AdverisementModel>(
+                    future: adverisements,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        if (snapshot.data.data.length > 0) {
+                          return Ads(snapshot.data);
+                        } else {
+                          return Center(
+                              child: Text(
+                            'No best seller yet ...',
+                            style: TextStyle(color: Colors.white),
+                          ));
+                        }
+                      }
+                      return Center(
+                          child: CircularProgressIndicator(
+                        backgroundColor: gouudBackgroundColor,
+                      ));
+                    }),
+                NarrowCardViewAll('BEST SELLER', 'BestSeller', ''),
                 new Container(
                   margin: EdgeInsets.only(top: 20, bottom: 0),
                   height: 300,
@@ -202,7 +163,7 @@ class _HomeState extends State<Home> {
                         ));
                       }),
                 ),
-                NarrowCardViewAll('DAILY DEALS', ''),
+                NarrowCardViewAll('DAILY DEALS', 'BestSeller', ''),
                 new Container(
                   child: GridView.count(
                     controller: new ScrollController(keepScrollOffset: false),
@@ -291,6 +252,92 @@ class MyBehavior extends ScrollBehavior {
   Widget buildViewportChrome(
       BuildContext context, Widget child, AxisDirection axisDirection) {
     return child;
+  }
+}
+
+class Ads extends StatefulWidget {
+  final AdverisementModel data;
+  Ads(this.data);
+  @override
+  _AdsState createState() => _AdsState();
+}
+
+class _AdsState extends State<Ads> {
+  int _current = 0;
+  List<Widget> imageSliders;
+  @override
+  void initState() {
+    super.initState();
+    imageSliders = widget.data.data
+        .map((item) => Container(
+              child: Container(
+                margin: EdgeInsets.all(5.0),
+                child: ClipRRect(
+                    borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                    child: Stack(
+                      children: <Widget>[
+                        new Image(
+                          image: new NetworkImageWithRetry(item.image),
+                          fit: BoxFit.cover,
+                          width: 1000,
+                        ),
+                        Positioned(
+                          bottom: 0.0,
+                          left: 0.0,
+                          right: 0.0,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Color.fromARGB(200, 0, 0, 0),
+                                  Color.fromARGB(0, 0, 0, 0)
+                                ],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )),
+              ),
+            ))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        CarouselSlider(
+          items: imageSliders,
+          options: CarouselOptions(
+              autoPlay: true,
+              enlargeCenterPage: true,
+              aspectRatio: 3.0,
+              onPageChanged: (index, reason) {
+                setState(() {
+                  _current = index;
+                });
+              }),
+        ),
+        new Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: widget.data.data.map((url) {
+            int index = widget.data.data.indexOf(url);
+            return Container(
+              width: 8.0,
+              height: 8.0,
+              margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _current == index ? gouudAppColor : gouudBackgroundColor,
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
   }
 }
 
@@ -599,11 +646,10 @@ class _ProductCardState extends State<ProductCard> {
 
 class ScrolProducts extends StatefulWidget {
   final String brandName;
-  final String viewAllUrl;
+  final String id;
   final String department;
   final List<ProductData> productsCards;
-  ScrolProducts(
-      this.brandName, this.viewAllUrl, this.department, this.productsCards);
+  ScrolProducts(this.brandName, this.id, this.department, this.productsCards);
   @override
   _ScrolProductsState createState() => _ScrolProductsState();
 }
@@ -620,8 +666,7 @@ class _ScrolProductsState extends State<ScrolProducts> {
           children: <Widget>[
             Padding(
               padding: EdgeInsets.only(bottom: 20),
-              child: NarrowCardViewAll(
-                  widget.brandName + ' PRODUCTS', widget.viewAllUrl),
+              child: NarrowCardViewAll(widget.brandName, 'Products', widget.id),
             ),
             // Container(
             //   height: 20,
@@ -683,12 +728,12 @@ class _NarrowCardState extends State<NarrowCard> {
                       ),
                       onTap: () {},
                     ),
-                    GestureDetector(
-                        onTap: () {},
-                        child: Text(
-                          'this water is very good',
-                          style: TextStyle(color: gouudFontColor, fontSize: 8),
-                        ))
+                    // GestureDetector(
+                    //     onTap: () {},
+                    //     child: Text(
+                    //       '',
+                    //       style: TextStyle(color: gouudFontColor, fontSize: 8),
+                    //     ))
                   ],
                 ),
               ),
@@ -731,7 +776,8 @@ class _NarrowCardState extends State<NarrowCard> {
 class NarrowCardViewAll extends StatefulWidget {
   final String navigate;
   final String text;
-  NarrowCardViewAll(this.text, this.navigate);
+  final String id;
+  NarrowCardViewAll(this.text, this.navigate, this.id);
 
   @override
   _NarrowCardViewAllState createState() => _NarrowCardViewAllState();
@@ -765,19 +811,20 @@ class _NarrowCardViewAllState extends State<NarrowCardViewAll> {
                           ),
                           onTap: () {},
                         ),
-                        GestureDetector(
-                            onTap: () {},
-                            child: Text(
-                              'this water is very good',
-                              style:
-                                  TextStyle(color: gouudFontColor, fontSize: 8),
-                            ))
+                        // GestureDetector(
+                        //     onTap: () {},
+                        //     child: Text(
+                        //       '',
+                        //       style:
+                        //           TextStyle(color: gouudFontColor, fontSize: 8),
+                        //     ))
                       ],
                     ),
                   ),
                   Padding(
                       padding: EdgeInsets.all(5),
-                      child: narrowContainer(widget.navigate)),
+                      child: narrowContainer(
+                          widget.text, widget.navigate, widget.id)),
                 ],
               ),
               decoration: new BoxDecoration(
@@ -789,10 +836,18 @@ class _NarrowCardViewAllState extends State<NarrowCardViewAll> {
   }
 
   /// button widget
-  Widget narrowContainer(pageName) {
+  Widget narrowContainer(text, pageName, id) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushReplacementNamed(context, pageName);
+        pageName == "BestSeller"
+            ? Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (BuildContext context) => BestSeller()))
+            : Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (BuildContext context) => Products(id, text)));
       },
       child: new Container(
         width: 75,

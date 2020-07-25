@@ -605,11 +605,10 @@ class _ProductCardState extends State<ProductCard> {
 
 class ScrolProducts extends StatefulWidget {
   final String brandName;
-  final String viewAllUrl;
+  final String id;
   final String department;
   final List<ProductsData> productsCards;
-  ScrolProducts(
-      this.brandName, this.viewAllUrl, this.department, this.productsCards);
+  ScrolProducts(this.brandName, this.id, this.department, this.productsCards);
   @override
   _ScrolProductsState createState() => _ScrolProductsState();
 }
@@ -626,8 +625,7 @@ class _ScrolProductsState extends State<ScrolProducts> {
           children: <Widget>[
             Padding(
               padding: EdgeInsets.only(bottom: 20),
-              child: NarrowCardViewAll(
-                  widget.brandName + ' PRODUCTS', widget.viewAllUrl),
+              child: NarrowCardViewAll(widget.brandName, widget.id),
             ),
             // Container(
             //   height: 20,
@@ -736,8 +734,8 @@ class _NarrowCardState extends State<NarrowCard> {
 
 class NarrowCardViewAll extends StatefulWidget {
   final String text;
-  final String navigate;
-  NarrowCardViewAll(this.text, this.navigate);
+  final String id;
+  NarrowCardViewAll(this.text, this.id);
 
   @override
   _NarrowCardViewAllState createState() => _NarrowCardViewAllState();
@@ -766,18 +764,18 @@ class _NarrowCardViewAllState extends State<NarrowCardViewAll> {
                       ),
                       onTap: () {},
                     ),
-                    GestureDetector(
-                        onTap: () {},
-                        child: Text(
-                          'this water is very good',
-                          style: TextStyle(color: gouudFontColor, fontSize: 8),
-                        ))
+                    // GestureDetector(
+                    //     onTap: () {},
+                    //     child: Text(
+                    //       'this water is very good',
+                    //       style: TextStyle(color: gouudFontColor, fontSize: 8),
+                    //     ))
                   ],
                 ),
               ),
               Padding(
                   padding: EdgeInsets.all(5),
-                  child: narrowContainer(widget.navigate)),
+                  child: narrowContainer(widget.id, widget.text)),
             ],
           ),
           decoration: new BoxDecoration(
@@ -789,13 +787,13 @@ class _NarrowCardViewAllState extends State<NarrowCardViewAll> {
   }
 
   /// button widget
-  Widget narrowContainer(pageName) {
+  Widget narrowContainer(id, text) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (BuildContext context) => Products(widget.navigate)));
+                builder: (BuildContext context) => Products(id, text)));
       },
       child: new Container(
         width: 75,

@@ -1,14 +1,14 @@
-class SectionsModel {
+class AdverisementModel {
   List<Data> data;
   bool status;
   String message;
   int count;
   int currentPage;
 
-  SectionsModel(
+  AdverisementModel(
       {this.data, this.status, this.message, this.count, this.currentPage});
 
-  SectionsModel.fromJson(Map<String, dynamic> json) {
+  AdverisementModel.fromJson(Map<String, dynamic> json) {
     if (json['data'] != null) {
       data = new List<Data>();
       json['data'].forEach((v) {
@@ -36,17 +36,17 @@ class SectionsModel {
 
 class Data {
   int id;
-  String nameEn;
   String nameAr;
+  String nameEn;
   String description;
   String image;
 
-  Data({this.id, this.nameEn, this.nameAr, this.description, this.image});
+  Data({this.id, this.nameAr, this.nameEn, this.description, this.image});
 
   Data.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    nameEn = json['name_en'];
     nameAr = json['name_ar'];
+    nameEn = json['name_en'];
     description = json['description'];
     image = json['image'];
   }
@@ -54,8 +54,8 @@ class Data {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['id'] = this.id;
-    data['name_en'] = this.nameEn;
     data['name_ar'] = this.nameAr;
+    data['name_en'] = this.nameEn;
     data['description'] = this.description;
     data['image'] = this.image;
     return data;

@@ -24,7 +24,7 @@ class Sections extends StatefulWidget {
 class _SectionsState extends State<Sections> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   SectionsModel section;
-  Future<List<SectionsModel>> sections;
+  Future<SectionsModel> sections;
   List<List> cardData = [
     ['erwaa-٢٣.png', 'MOSQUE OFFER'],
     ['erwaa-٢٤.png', 'COMPANY OFFER'],
@@ -93,11 +93,11 @@ class _SectionsState extends State<Sections> {
                       fit: BoxFit.cover)),
             ),
             ListView(children: <Widget>[
-              FutureBuilder<List<SectionsModel>>(
+              FutureBuilder<SectionsModel>(
                   future: sections,
                   builder: (context, snapshot) {
                     if (snapshot.hasData) {
-                      if (snapshot.data.length > 0) {
+                      if (snapshot.data.data.length > 0) {
                         return Container(
                           child: GridView.count(
                             controller:
@@ -109,12 +109,13 @@ class _SectionsState extends State<Sections> {
                             padding: EdgeInsets.only(
                                 bottom: 10, left: 15, right: 15, top: 10),
                             mainAxisSpacing: 10,
-                            children:
-                                List.generate(snapshot.data.length, (index) {
+                            children: List.generate(snapshot.data.data.length,
+                                (index) {
                               return CardItemSection(
-                                  snapshot.data[index].name,
-                                  snapshot.data[index].photoUrl,
-                                  snapshot.data[index].brandsUrl);
+                                  snapshot.data.data[index].nameEn,
+                                  snapshot.data.data[index].description,
+                                  snapshot.data.data[index].image,
+                                  snapshot.data.data[index].id.toString());
                             }),
                           ),
                         );
@@ -196,9 +197,10 @@ class CircleIcon extends StatelessWidget {
 
 class CardItemSection extends StatefulWidget {
   final String name;
+  final String description;
   final String photoUrl;
-  final String navigationUrl;
-  CardItemSection(this.name, this.photoUrl, this.navigationUrl);
+  final String id;
+  CardItemSection(this.name, this.description, this.photoUrl, this.id);
   @override
   _CardItemSectionState createState() => _CardItemSectionState();
 }
@@ -239,7 +241,7 @@ class _CardItemSectionState extends State<CardItemSection> {
                               context,
                               MaterialPageRoute(
                                   builder: (BuildContext context) =>
-                                      SectionProducts(widget.navigationUrl)));
+                                      SectionProducts(widget.id)));
                         },
                       ),
                       GestureDetector(
@@ -248,10 +250,10 @@ class _CardItemSectionState extends State<CardItemSection> {
                                 context,
                                 MaterialPageRoute(
                                     builder: (BuildContext context) =>
-                                        SectionProducts(widget.navigationUrl)));
+                                        SectionProducts(widget.id)));
                           },
                           child: Text(
-                            'this water is very good',
+                            widget.description + '',
                             style:
                                 TextStyle(color: gouudFontColor, fontSize: 12),
                           ))
@@ -265,7 +267,7 @@ class _CardItemSectionState extends State<CardItemSection> {
                       context,
                       MaterialPageRoute(
                           builder: (BuildContext context) =>
-                              SectionProducts(widget.navigationUrl)));
+                              SectionProducts(widget.id)));
                 },
                 child: Padding(
                   padding: EdgeInsets.only(right: 20),
