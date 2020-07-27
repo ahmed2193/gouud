@@ -15,6 +15,7 @@ class SignUpProvider with ChangeNotifier {
     final response = await SignUpRequest()
         .register(name, email, phone, password, cpassword, countryId);
     this.code = response.statusCode.toString();
+    print(response.body.toString());
     if (this.code == '201') {
       data = SignUpModel.fromJson(json.decode(response.body));
       print(data);

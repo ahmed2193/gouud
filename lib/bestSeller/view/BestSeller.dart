@@ -1,11 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_image/network.dart';
 import 'package:gouud/UI_EN/constants/BarContent.dart';
 import 'package:gouud/UI_EN/constants/gouudColors.dart';
 import 'package:gouud/bestSeller/model/AllBestSellerModel.dart';
 import 'package:gouud/bestSeller/provider/AllBestSellerProvider.dart';
+import 'package:gouud/home/Logic/HomeLogic.dart';
+import 'package:gouud/home/provider/HomeProvider.dart';
+import 'package:gouud/login/view/Login.dart';
+import 'package:gouud/product/view/Product.dart';
 import 'package:gouud/products/view/Products.dart';
+import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
+import 'package:toast/toast.dart';
 // import 'package:gouud/UI_EN/constants/ScrollProducts.dart';
 
 class BestSeller extends StatefulWidget {
@@ -292,74 +300,162 @@ class ProductCard extends StatefulWidget {
   final String price;
   final double rate;
   final String photoUrl;
-  final String navigationUrl;
+  final String id;
   ProductCard(this.productName, this.departmentName, this.price, this.rate,
-      this.photoUrl, this.navigationUrl);
+      this.photoUrl, this.id);
   @override
   _ProductCardState createState() => _ProductCardState();
 }
 
 class _ProductCardState extends State<ProductCard> {
+  int loading = 1;
+  int inCart = 1;
+  int infavourite = 1;
+  addToCart(productId) {
+    HomeLogic homeLogic = new HomeLogic();
+    HomeProvider homeProvider = new HomeProvider();
+    homeLogic.checkLogin().whenComplete(() {
+      if (homeLogic.inner) {
+        setState(() {
+          loading = 2;
+        });
+        homeProvider.cart(productId, 1).whenComplete(() {
+          print(homeProvider.statusCode);
+          if (homeProvider.statusCode == '201') {
+            setState(() {
+              inCart = 2;
+              loading = 1;
+            });
+            Toast.show("Product has added to cart", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          } else if (homeProvider.statusCode == '422') {
+            Toast.show("Product already in cart", context,
+                duration: 4, gravity: Toast.BOTTOM);
+            setState(() {
+              loading = 1;
+            });
+          } else {
+            Toast.show("server error please try later ", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          }
+        });
+      } else {
+        Toast.show("please login to complete the process", context,
+            duration: 4, gravity: Toast.CENTER);
+        Timer(new Duration(milliseconds: 1000), () {
+          pushNewScreen(
+            context,
+            screen: Login(),
+            platformSpecific: true,
+            withNavBar: false,
+          );
+        });
+      }
+    });
+  }
+
+  addToFavourite(productId) {
+    HomeLogic homeLogic = new HomeLogic();
+    HomeProvider homeProvider = new HomeProvider();
+    homeLogic.checkLogin().whenComplete(() {
+      if (homeLogic.inner) {
+        homeProvider.favourite(productId).whenComplete(() {
+          print(homeProvider.statusCode);
+          if (homeProvider.statusCode == '201') {
+            setState(() {
+              infavourite = 2;
+            });
+            Toast.show("Product has added to favourite", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          } else if (homeProvider.statusCode == '422') {
+            Toast.show("Product already in favourite", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          } else {
+            Toast.show("server error please try later ", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          }
+        });
+      } else {
+        Toast.show("please login to complete the process", context,
+            duration: 4, gravity: Toast.CENTER);
+        Timer(new Duration(milliseconds: 1000), () {
+          pushNewScreen(
+            context,
+            screen: Login(),
+            platformSpecific: true,
+            withNavBar: false,
+          );
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
-        child: GestureDetector(
-            onTap: () {
-              // pushNewScreen(context,
-              //     screen: Product(widget.navigationUrl),
-              //     platformSpecific: true,
-              //     withNavBar: false);
-            },
-            child: Container(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Expanded(
-                    flex: 6,
-                    child: Container(
-                      decoration: new BoxDecoration(
-                        color: gouudWhite,
-                        boxShadow: [
-                          BoxShadow(color: gouudAppColor, spreadRadius: 1)
-                        ],
-                        borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(25.0),
-                            topRight: Radius.circular(25.0)),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: <Widget>[
-                          Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Container(
-                                  width: 60,
-                                  height: 25,
-                                  child: Center(
-                                      child: Text(
-                                    '-35%',
-                                    style: TextStyle(color: gouudWhite),
-                                    textAlign: TextAlign.center,
-                                  )),
-                                  decoration: new BoxDecoration(
-                                    color: gouudBackgroundColor,
-                                    borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(25.0),
-                                        bottomRight: Radius.circular(25.0)),
-                                  ),
-                                ),
-                                Padding(
+        child: Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(
+                flex: 6,
+                child: Container(
+                  decoration: new BoxDecoration(
+                    color: gouudWhite,
+                    boxShadow: [
+                      BoxShadow(color: gouudAppColor, spreadRadius: 1)
+                    ],
+                    borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(25.0),
+                        topRight: Radius.circular(25.0)),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            Container(
+                              width: 60,
+                              height: 25,
+                              child: Center(
+                                  child: Text(
+                                '-35%',
+                                style: TextStyle(color: gouudWhite),
+                                textAlign: TextAlign.center,
+                              )),
+                              decoration: new BoxDecoration(
+                                color: gouudBackgroundColor,
+                                borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(25.0),
+                                    bottomRight: Radius.circular(25.0)),
+                              ),
+                            ),
+                            GestureDetector(
+                                onTap: () {
+                                  addToFavourite(widget.id);
+                                },
+                                child: Padding(
                                     padding: EdgeInsets.only(right: 10, top: 5),
                                     child: Icon(
-                                      Icons.favorite_border,
+                                      infavourite == 1
+                                          ? Icons.favorite_border
+                                          : Icons.favorite,
                                       color: gouudAppColor,
                                       size: 30,
-                                    ))
-                              ]),
-                          Expanded(
-                            flex: 3,
+                                    )))
+                          ]),
+                      Expanded(
+                          flex: 3,
+                          child: GestureDetector(
+                            onTap: () {
+                              pushNewScreen(context,
+                                  screen: Product(widget.id),
+                                  platformSpecific: true,
+                                  withNavBar: false);
+                            },
                             child: Padding(
                               padding: EdgeInsets.all(2),
                               child: ClipRRect(
@@ -371,75 +467,77 @@ class _ProductCardState extends State<ProductCard> {
                                         widget.photoUrl),
                                   )),
                             ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Column(
+                          )),
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: <Widget>[
+                            Center(
+                                child: SmoothStarRating(
+                              rating: widget.rate,
+                              isReadOnly: true,
+                              size: 20,
+                              color: gouudAppColor,
+                              borderColor: gouudAppColor,
+                              filledIconData: Icons.star,
+                              halfFilledIconData: Icons.star_half,
+                              defaultIconData: Icons.star_border,
+                              starCount: 5,
+                              allowHalfRating: true,
+                              spacing: 2.0,
+                              onRated: (value) {
+                                // print("rating value -> $value");
+                                // print("rating value dd -> ${value.truncate()}");
+                              },
+                            )),
+                            Center(
+                              child: Text(
+                                widget.productName,
+                                style: TextStyle(fontSize: 8),
+                              ),
+                            ),
+                            Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: <Widget>[
-                                Center(
-                                    child: SmoothStarRating(
-                                  rating: widget.rate,
-                                  isReadOnly: true,
-                                  size: 20,
-                                  color: gouudAppColor,
-                                  borderColor: gouudAppColor,
-                                  filledIconData: Icons.star,
-                                  halfFilledIconData: Icons.star_half,
-                                  defaultIconData: Icons.star_border,
-                                  starCount: 5,
-                                  allowHalfRating: true,
-                                  spacing: 2.0,
-                                  onRated: (value) {
-                                    // print("rating value -> $value");
-                                    // print("rating value dd -> ${value.truncate()}");
-                                  },
-                                )),
-                                Center(
-                                  child: Text(
-                                    widget.productName,
-                                    style: TextStyle(fontSize: 8),
-                                  ),
+                                Text(
+                                  widget.price,
+                                  style: TextStyle(
+                                      fontSize: 8, color: gouudAppColor),
                                 ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: <Widget>[
-                                    Text(
-                                      widget.price,
-                                      style: TextStyle(
-                                          fontSize: 8, color: gouudAppColor),
-                                    ),
-                                    Container(
-                                      width: 60,
-                                      height: 20,
-                                      child: Center(
-                                          child: Text(
-                                        'PARTS',
-                                        style: TextStyle(
-                                            fontSize: 8, color: gouudAppColor),
-                                      )),
-                                      decoration: new BoxDecoration(
-                                        color: gouudWhite,
-                                        boxShadow: [
-                                          BoxShadow(
-                                              color: gouudAppColor,
-                                              spreadRadius: 1)
-                                        ],
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(10.0)),
-                                      ),
-                                    )
-                                  ],
+                                Container(
+                                  width: 60,
+                                  height: 20,
+                                  child: Center(
+                                      child: Text(
+                                    'PARTS',
+                                    style: TextStyle(
+                                        fontSize: 8, color: gouudAppColor),
+                                  )),
+                                  decoration: new BoxDecoration(
+                                    color: gouudWhite,
+                                    boxShadow: [
+                                      BoxShadow(
+                                          color: gouudAppColor, spreadRadius: 1)
+                                    ],
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(10.0)),
+                                  ),
                                 )
                               ],
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
+                            )
+                          ],
+                        ),
+                      )
+                    ],
                   ),
-                  Expanded(
+                ),
+              ),
+              Expanded(
+                  child: GestureDetector(
+                      onTap: () {
+                        addToCart(widget.id);
+                      },
                       child: Container(
                           decoration: new BoxDecoration(
                             color: gouudAppColor,
@@ -454,10 +552,16 @@ class _ProductCardState extends State<ProductCard> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: <Widget>[
-                              Icon(
-                                Icons.shopping_cart,
-                                color: gouudWhite,
-                              ),
+                              loading == 1
+                                  ? Icon(
+                                      Icons.shopping_cart,
+                                      color:
+                                          inCart == 1 ? gouudWhite : gouudGreen,
+                                    )
+                                  : Center(
+                                      child: CircularProgressIndicator(
+                                      backgroundColor: gouudBackgroundColor,
+                                    )),
                               Text(
                                 "ADD TO CART",
                                 style:
@@ -465,9 +569,9 @@ class _ProductCardState extends State<ProductCard> {
                                 textAlign: TextAlign.center,
                               ),
                             ],
-                          )))
-                ],
-              ),
-            )));
+                          ))))
+            ],
+          ),
+        ));
   }
 }

@@ -1,5 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_image/network.dart';
+import 'package:gouud/home/Logic/HomeLogic.dart';
+import 'package:gouud/home/provider/HomeProvider.dart';
+import 'package:gouud/login/view/Login.dart';
 import 'package:gouud/product/view/Product.dart';
 import 'package:gouud/UI_EN/constants/BarContent.dart';
 import 'package:gouud/UI_EN/constants/gouudColors.dart';
@@ -7,6 +12,7 @@ import 'package:gouud/products/model/ProductsModel.dart';
 import 'package:gouud/products/provider/ProductsProvider.dart';
 import 'package:flutter_paginator/flutter_paginator.dart';
 import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
+import 'package:toast/toast.dart';
 
 class Products extends StatefulWidget {
   static const id = 'Products';
@@ -174,14 +180,95 @@ class MyBehavior extends ScrollBehavior {
 }
 
 class ProductCard extends StatefulWidget {
-  final Data item;
+  final dynamic item;
   ProductCard(this.item);
   @override
   _ProductCardState createState() => _ProductCardState();
 }
 
 class _ProductCardState extends State<ProductCard> {
-  var rating = 3.0;
+  int loading = 1;
+  int inCart = 1;
+  int infavourite = 1;
+  addToCart(productId) {
+    HomeLogic homeLogic = new HomeLogic();
+    HomeProvider homeProvider = new HomeProvider();
+    homeLogic.checkLogin().whenComplete(() {
+      if (homeLogic.inner) {
+        setState(() {
+          loading = 2;
+        });
+        homeProvider.cart(productId, 1).whenComplete(() {
+          print(homeProvider.statusCode);
+          if (homeProvider.statusCode == '201') {
+            setState(() {
+              inCart = 2;
+              loading = 1;
+            });
+            Toast.show("Product has added to cart", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          } else if (homeProvider.statusCode == '422') {
+            Toast.show("Product already in cart", context,
+                duration: 4, gravity: Toast.BOTTOM);
+            setState(() {
+              loading = 1;
+            });
+          } else {
+            Toast.show("server error please try later ", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          }
+        });
+      } else {
+        Toast.show("please login to complete the process", context,
+            duration: 4, gravity: Toast.CENTER);
+        Timer(new Duration(milliseconds: 1000), () {
+          pushNewScreen(
+            context,
+            screen: Login(),
+            platformSpecific: true,
+            withNavBar: false,
+          );
+        });
+      }
+    });
+  }
+
+  addToFavourite(productId) {
+    HomeLogic homeLogic = new HomeLogic();
+    HomeProvider homeProvider = new HomeProvider();
+    homeLogic.checkLogin().whenComplete(() {
+      if (homeLogic.inner) {
+        homeProvider.favourite(productId).whenComplete(() {
+          print(homeProvider.statusCode);
+          if (homeProvider.statusCode == '201') {
+            setState(() {
+              infavourite = 2;
+            });
+            Toast.show("Product has added to favourite", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          } else if (homeProvider.statusCode == '422') {
+            Toast.show("Product already in favourite", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          } else {
+            Toast.show("server error please try later ", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          }
+        });
+      } else {
+        Toast.show("please login to complete the process", context,
+            duration: 4, gravity: Toast.CENTER);
+        Timer(new Duration(milliseconds: 1000), () {
+          pushNewScreen(
+            context,
+            screen: Login(),
+            platformSpecific: true,
+            withNavBar: false,
+          );
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -195,12 +282,15 @@ class _ProductCardState extends State<ProductCard> {
                 child: Container(
                   decoration: new BoxDecoration(
                     color: gouudWhite,
+                    boxShadow: [
+                      BoxShadow(color: gouudAppColor, spreadRadius: 1)
+                    ],
                     borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(25.0),
                         topRight: Radius.circular(25.0)),
                   ),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: <Widget>[
                       Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,7 +301,7 @@ class _ProductCardState extends State<ProductCard> {
                               height: 25,
                               child: Center(
                                   child: Text(
-                                widget.item.discount + '%',
+                                widget.item.discount.toString() + '%',
                                 style: TextStyle(color: gouudWhite),
                                 textAlign: TextAlign.center,
                               )),
@@ -222,26 +312,41 @@ class _ProductCardState extends State<ProductCard> {
                                     bottomRight: Radius.circular(25.0)),
                               ),
                             ),
-                            Padding(
-                                padding: EdgeInsets.only(right: 10, top: 5),
-                                child: Icon(
-                                  Icons.favorite_border,
-                                  color: gouudAppColor,
-                                  size: 30,
-                                ))
+                            GestureDetector(
+                                onTap: () {
+                                  addToFavourite(widget.item.id);
+                                },
+                                child: Padding(
+                                    padding: EdgeInsets.only(right: 10, top: 5),
+                                    child: Icon(
+                                      infavourite == 1
+                                          ? Icons.favorite_border
+                                          : Icons.favorite,
+                                      color: gouudAppColor,
+                                      size: 30,
+                                    )))
                           ]),
                       Expanded(
-                        flex: 3,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(15.0),
-                              topRight: Radius.circular(15.0)),
-                          child: Image(
-                              image: new NetworkImageWithRetry(
-                                  widget.item.images[0].image),
-                              fit: BoxFit.contain),
-                        ),
-                      ),
+                          flex: 3,
+                          child: GestureDetector(
+                            onTap: () {
+                              pushNewScreen(context,
+                                  screen: Product(widget.item.id),
+                                  platformSpecific: true,
+                                  withNavBar: false);
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(2),
+                              child: ClipRRect(
+                                  borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(15.0),
+                                      topRight: Radius.circular(15.0)),
+                                  child: new Image(
+                                    image: new NetworkImageWithRetry(
+                                        widget.item.images[0].image),
+                                  )),
+                            ),
+                          )),
                       Expanded(
                         flex: 2,
                         child: Column(
@@ -257,7 +362,7 @@ class _ProductCardState extends State<ProductCard> {
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: <Widget>[
                                 Text(
-                                  widget.item.price,
+                                  widget.item.price.toString(),
                                   style: TextStyle(
                                       fontSize: 8, color: gouudAppColor),
                                 ),
@@ -290,28 +395,34 @@ class _ProductCardState extends State<ProductCard> {
                 ),
               ),
               Expanded(
-                  child: Container(
-                      decoration: new BoxDecoration(
-                        color: gouudAppColor,
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(25.0),
-                          bottomRight: Radius.circular(25.0),
-                        ),
-                      ),
-                      child: GestureDetector(
-                          onTap: () {
-                            pushNewScreen(context,
-                                screen: Product(widget.item.id.toString()),
-                                platformSpecific: true,
-                                withNavBar: false);
-                          },
+                  child: GestureDetector(
+                      onTap: () {
+                        addToCart(widget.item.id);
+                      },
+                      child: Container(
+                          decoration: new BoxDecoration(
+                            color: gouudAppColor,
+                            boxShadow: [
+                              BoxShadow(color: gouudAppColor, spreadRadius: 1)
+                            ],
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(25.0),
+                              bottomRight: Radius.circular(25.0),
+                            ),
+                          ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: <Widget>[
-                              Icon(
-                                Icons.shopping_cart,
-                                color: gouudWhite,
-                              ),
+                              loading == 1
+                                  ? Icon(
+                                      Icons.shopping_cart,
+                                      color:
+                                          inCart == 1 ? gouudWhite : gouudGreen,
+                                    )
+                                  : Center(
+                                      child: CircularProgressIndicator(
+                                      backgroundColor: gouudBackgroundColor,
+                                    )),
                               Text(
                                 "ADD TO CART",
                                 style:

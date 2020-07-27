@@ -39,9 +39,9 @@ class Data {
   String nameEn;
   String nameAr;
   List<Images> images;
-  String discount;
-  String price;
-  double rate;
+  dynamic discount;
+  dynamic price;
+  dynamic rate;
   String brandId;
   Brand brand;
 

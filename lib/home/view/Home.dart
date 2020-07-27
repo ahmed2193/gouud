@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:carousel_slider/carousel_options.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image/network.dart';
@@ -5,9 +7,11 @@ import 'package:gouud/bestSeller/view/BestSeller.dart';
 import 'package:gouud/UI_EN/constants/BarContent.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:gouud/UI_EN/constants/gouudColors.dart';
+import 'package:gouud/home/Logic/HomeLogic.dart';
 import 'package:gouud/home/model/HomeModel.dart';
 import 'package:gouud/home/model/adverisementModel.dart';
 import 'package:gouud/home/provider/HomeProvider.dart';
+import 'package:gouud/login/view/Login.dart';
 import 'package:gouud/product/view/Product.dart';
 import 'package:gouud/products/view/Products.dart';
 import 'package:gouud/sectionProducts/model/BestSellerModel.dart';
@@ -15,6 +19,7 @@ import 'package:gouud/sectionProducts/provider/BestSellerProvider.dart';
 import 'package:gouud/specialOffers/view/SpecialOffers.dart';
 import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
+import 'package:toast/toast.dart';
 
 final List<String> imageList = [
   "assets/icons/slide2.png",
@@ -38,11 +43,20 @@ class _HomeState extends State<Home> {
   Future<BestSellerModel> bestSeller;
   Future<HomeModel> homeData;
   Future<AdverisementModel> adverisements;
+  List<String> cartProducts;
+  List<String> quantityProducts;
+  List<String> favouriteProducts;
   void initState() {
     super.initState();
     bestSeller = BestSellerProvider().bestSellerData();
     homeData = HomeProvider().homeData();
     adverisements = HomeProvider().advertisement();
+    HomeProvider homeProvider = new HomeProvider();
+    homeProvider.getDataList().whenComplete(() {
+      cartProducts = homeProvider.cartIds;
+      quantityProducts = homeProvider.cartIdsQuantity;
+      favouriteProducts = homeProvider.favouriteIds;
+    });
   }
 
   @override
@@ -143,10 +157,22 @@ class _HomeState extends State<Home> {
                                     snapshot.data.data[index].nameEn,
                                     snapshot.data.data[index].brand.department
                                         .nameEn,
-                                    snapshot.data.data[index].price,
+                                    snapshot.data.data[index].price.toString(),
                                     snapshot.data.data[index].rate,
                                     snapshot.data.data[index].images[0].image,
-                                    snapshot.data.data[index].id.toString());
+                                    snapshot.data.data[index].id.toString(),
+                                    cartProducts,
+                                    quantityProducts,
+                                    favouriteProducts, (value) {
+                                  setState(() {
+                                    cartProducts.add(value);
+                                    quantityProducts.add('1');
+                                  });
+                                }, (value) {
+                                  setState(() {
+                                    favouriteProducts.add(value);
+                                  });
+                                });
                               }),
                             );
                           } else {
@@ -201,7 +227,19 @@ class _HomeState extends State<Home> {
                                     snapshot.data.data[index].nameEn,
                                     snapshot.data.data[index].id.toString(),
                                     snapshot.data.data[index].department.nameEn,
-                                    snapshot.data.data[index].productData);
+                                    snapshot.data.data[index].productData,
+                                    cartProducts,
+                                    quantityProducts,
+                                    favouriteProducts, (value) {
+                                  setState(() {
+                                    cartProducts.add(value);
+                                    quantityProducts.add('1');
+                                  });
+                                }, (value) {
+                                  setState(() {
+                                    favouriteProducts.add(value);
+                                  });
+                                });
                               }),
                             );
                           } else {
@@ -464,74 +502,196 @@ class ProductCard extends StatefulWidget {
   final String price;
   final double rate;
   final String photoUrl;
-  final String navigationUrl;
-  ProductCard(this.productName, this.departmentName, this.price, this.rate,
-      this.photoUrl, this.navigationUrl);
+  final String id;
+  final List<String> cartProducts;
+  final List<String> quantityProducts;
+  final List<String> favouriteProducts;
+  final Function(String) addToCartList;
+  final Function(String) addToFavouriteList;
+  ProductCard(
+      this.productName,
+      this.departmentName,
+      this.price,
+      this.rate,
+      this.photoUrl,
+      this.id,
+      this.cartProducts,
+      this.quantityProducts,
+      this.favouriteProducts,
+      this.addToCartList,
+      this.addToFavouriteList);
   @override
   _ProductCardState createState() => _ProductCardState();
 }
 
 class _ProductCardState extends State<ProductCard> {
+  int loading = 1;
+  int inCart;
+  int infavourite;
+
+  void initState() {
+    super.initState();
+    if (widget.cartProducts.contains(widget.id.toString())) {
+      inCart = 2;
+    } else {
+      inCart = 1;
+    }
+    if (widget.favouriteProducts.contains(widget.id.toString())) {
+      infavourite = 2;
+    } else {
+      infavourite = 1;
+    }
+  }
+
+  addToCart(productId) {
+    HomeLogic homeLogic = new HomeLogic();
+    HomeProvider homeProvider = new HomeProvider();
+    homeLogic.checkLogin().whenComplete(() {
+      if (homeLogic.inner) {
+        setState(() {
+          loading = 2;
+        });
+        homeProvider.cart(productId, 1).whenComplete(() {
+          print(homeProvider.statusCode);
+          if (homeProvider.statusCode == '201') {
+            setState(() {
+              inCart = 2;
+              loading = 1;
+              widget.addToCartList(productId);
+            });
+            Toast.show("Product has added to cart", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          } else if (homeProvider.statusCode == '422') {
+            Toast.show("Product already in cart", context,
+                duration: 4, gravity: Toast.BOTTOM);
+            setState(() {
+              loading = 1;
+            });
+          } else {
+            Toast.show("server error please try later ", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          }
+        });
+      } else {
+        Toast.show("please login to complete the process", context,
+            duration: 4, gravity: Toast.CENTER);
+        Timer(new Duration(milliseconds: 1000), () {
+          pushNewScreen(
+            context,
+            screen: Login(),
+            platformSpecific: true,
+            withNavBar: false,
+          );
+        });
+      }
+    });
+  }
+
+  addToFavourite(productId) {
+    HomeLogic homeLogic = new HomeLogic();
+    HomeProvider homeProvider = new HomeProvider();
+    homeLogic.checkLogin().whenComplete(() {
+      if (homeLogic.inner) {
+        homeProvider.favourite(productId).whenComplete(() {
+          print(homeProvider.statusCode);
+          if (homeProvider.statusCode == '201') {
+            setState(() {
+              infavourite = 2;
+              widget.addToFavouriteList(productId);
+            });
+            Toast.show("Product has added to favourite", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          } else if (homeProvider.statusCode == '422') {
+            Toast.show("Product already in favourite", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          } else {
+            Toast.show("server error please try later ", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          }
+        });
+      } else {
+        Toast.show("please login to complete the process", context,
+            duration: 4, gravity: Toast.CENTER);
+        Timer(new Duration(milliseconds: 1000), () {
+          pushNewScreen(
+            context,
+            screen: Login(),
+            platformSpecific: true,
+            withNavBar: false,
+          );
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
-        child: GestureDetector(
-            onTap: () {
-              pushNewScreen(context,
-                  screen: Product(widget.navigationUrl),
-                  platformSpecific: true,
-                  withNavBar: false);
-            },
-            child: Container(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Expanded(
-                    flex: 6,
-                    child: Container(
-                      decoration: new BoxDecoration(
-                        color: gouudWhite,
-                        boxShadow: [
-                          BoxShadow(color: gouudAppColor, spreadRadius: 1)
-                        ],
-                        borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(25.0),
-                            topRight: Radius.circular(25.0)),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: <Widget>[
-                          Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Container(
-                                  width: 60,
-                                  height: 25,
-                                  child: Center(
-                                      child: Text(
-                                    '-35%',
-                                    style: TextStyle(color: gouudWhite),
-                                    textAlign: TextAlign.center,
-                                  )),
-                                  decoration: new BoxDecoration(
-                                    color: gouudBackgroundColor,
-                                    borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(25.0),
-                                        bottomRight: Radius.circular(25.0)),
-                                  ),
-                                ),
-                                Padding(
+        child: Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(
+                flex: 6,
+                child: Container(
+                  decoration: new BoxDecoration(
+                    color: gouudWhite,
+                    boxShadow: [
+                      BoxShadow(color: gouudAppColor, spreadRadius: 1)
+                    ],
+                    borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(25.0),
+                        topRight: Radius.circular(25.0)),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            Container(
+                              width: 60,
+                              height: 25,
+                              child: Center(
+                                  child: Text(
+                                '-35%',
+                                style: TextStyle(color: gouudWhite),
+                                textAlign: TextAlign.center,
+                              )),
+                              decoration: new BoxDecoration(
+                                color: gouudBackgroundColor,
+                                borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(25.0),
+                                    bottomRight: Radius.circular(25.0)),
+                              ),
+                            ),
+                            GestureDetector(
+                                onTap: () {
+                                  addToFavourite(widget.id);
+                                },
+                                child: Padding(
                                     padding: EdgeInsets.only(right: 10, top: 5),
                                     child: Icon(
-                                      Icons.favorite_border,
-                                      color: gouudAppColor,
+                                      infavourite == 1
+                                          ? Icons.favorite_border
+                                          : Icons.favorite,
+                                      color: infavourite == 1
+                                          ? gouudAppColor
+                                          : gouudFavourite,
                                       size: 30,
-                                    ))
-                              ]),
-                          Expanded(
-                            flex: 3,
+                                    )))
+                          ]),
+                      Expanded(
+                          flex: 3,
+                          child: GestureDetector(
+                            onTap: () {
+                              pushNewScreen(context,
+                                  screen: Product(widget.id),
+                                  platformSpecific: true,
+                                  withNavBar: false);
+                            },
                             child: Padding(
                               padding: EdgeInsets.all(2),
                               child: ClipRRect(
@@ -543,75 +703,77 @@ class _ProductCardState extends State<ProductCard> {
                                         widget.photoUrl),
                                   )),
                             ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Column(
+                          )),
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: <Widget>[
+                            Center(
+                                child: SmoothStarRating(
+                              rating: widget.rate,
+                              isReadOnly: true,
+                              size: 20,
+                              color: gouudAppColor,
+                              borderColor: gouudAppColor,
+                              filledIconData: Icons.star,
+                              halfFilledIconData: Icons.star_half,
+                              defaultIconData: Icons.star_border,
+                              starCount: 5,
+                              allowHalfRating: true,
+                              spacing: 2.0,
+                              onRated: (value) {
+                                // print("rating value -> $value");
+                                // print("rating value dd -> ${value.truncate()}");
+                              },
+                            )),
+                            Center(
+                              child: Text(
+                                widget.productName,
+                                style: TextStyle(fontSize: 8),
+                              ),
+                            ),
+                            Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: <Widget>[
-                                Center(
-                                    child: SmoothStarRating(
-                                  rating: widget.rate,
-                                  isReadOnly: true,
-                                  size: 20,
-                                  color: gouudAppColor,
-                                  borderColor: gouudAppColor,
-                                  filledIconData: Icons.star,
-                                  halfFilledIconData: Icons.star_half,
-                                  defaultIconData: Icons.star_border,
-                                  starCount: 5,
-                                  allowHalfRating: true,
-                                  spacing: 2.0,
-                                  onRated: (value) {
-                                    // print("rating value -> $value");
-                                    // print("rating value dd -> ${value.truncate()}");
-                                  },
-                                )),
-                                Center(
-                                  child: Text(
-                                    widget.productName,
-                                    style: TextStyle(fontSize: 8),
-                                  ),
+                                Text(
+                                  widget.price,
+                                  style: TextStyle(
+                                      fontSize: 8, color: gouudAppColor),
                                 ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: <Widget>[
-                                    Text(
-                                      widget.price,
-                                      style: TextStyle(
-                                          fontSize: 8, color: gouudAppColor),
-                                    ),
-                                    Container(
-                                      width: 60,
-                                      height: 20,
-                                      child: Center(
-                                          child: Text(
-                                        'PARTS',
-                                        style: TextStyle(
-                                            fontSize: 8, color: gouudAppColor),
-                                      )),
-                                      decoration: new BoxDecoration(
-                                        color: gouudWhite,
-                                        boxShadow: [
-                                          BoxShadow(
-                                              color: gouudAppColor,
-                                              spreadRadius: 1)
-                                        ],
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(10.0)),
-                                      ),
-                                    )
-                                  ],
+                                Container(
+                                  width: 60,
+                                  height: 20,
+                                  child: Center(
+                                      child: Text(
+                                    'PARTS',
+                                    style: TextStyle(
+                                        fontSize: 8, color: gouudAppColor),
+                                  )),
+                                  decoration: new BoxDecoration(
+                                    color: gouudWhite,
+                                    boxShadow: [
+                                      BoxShadow(
+                                          color: gouudAppColor, spreadRadius: 1)
+                                    ],
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(10.0)),
+                                  ),
                                 )
                               ],
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
+                            )
+                          ],
+                        ),
+                      )
+                    ],
                   ),
-                  Expanded(
+                ),
+              ),
+              Expanded(
+                  child: GestureDetector(
+                      onTap: () {
+                        addToCart(widget.id);
+                      },
                       child: Container(
                           decoration: new BoxDecoration(
                             color: gouudAppColor,
@@ -626,10 +788,16 @@ class _ProductCardState extends State<ProductCard> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: <Widget>[
-                              Icon(
-                                Icons.shopping_cart,
-                                color: gouudWhite,
-                              ),
+                              loading == 1
+                                  ? Icon(
+                                      Icons.shopping_cart,
+                                      color:
+                                          inCart == 1 ? gouudWhite : gouudGreen,
+                                    )
+                                  : Center(
+                                      child: CircularProgressIndicator(
+                                      backgroundColor: gouudBackgroundColor,
+                                    )),
                               Text(
                                 "ADD TO CART",
                                 style:
@@ -637,10 +805,10 @@ class _ProductCardState extends State<ProductCard> {
                                 textAlign: TextAlign.center,
                               ),
                             ],
-                          )))
-                ],
-              ),
-            )));
+                          ))))
+            ],
+          ),
+        ));
   }
 }
 
@@ -649,7 +817,21 @@ class ScrolProducts extends StatefulWidget {
   final String id;
   final String department;
   final List<ProductData> productsCards;
-  ScrolProducts(this.brandName, this.id, this.department, this.productsCards);
+  final List<String> cartProducts;
+  final List<String> quantityProducts;
+  final List<String> favouriteProducts;
+  final Function(String) addToCartList;
+  final Function(String) addToFavouriteList;
+  ScrolProducts(
+      this.brandName,
+      this.id,
+      this.department,
+      this.productsCards,
+      this.cartProducts,
+      this.quantityProducts,
+      this.favouriteProducts,
+      this.addToCartList,
+      this.addToFavouriteList);
   @override
   _ScrolProductsState createState() => _ScrolProductsState();
 }
@@ -689,7 +871,12 @@ class _ScrolProductsState extends State<ScrolProducts> {
                       widget.productsCards[index].price,
                       widget.productsCards[index].rate,
                       widget.productsCards[index].images[0].image,
-                      widget.productsCards[index].id.toString());
+                      widget.productsCards[index].id.toString(),
+                      widget.cartProducts,
+                      widget.quantityProducts,
+                      widget.favouriteProducts,
+                      widget.addToCartList,
+                      widget.addToFavouriteList);
                 }),
               ),
             ))
@@ -840,14 +1027,12 @@ class _NarrowCardViewAllState extends State<NarrowCardViewAll> {
     return GestureDetector(
       onTap: () {
         pageName == "BestSeller"
-            ? Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (BuildContext context) => BestSeller()))
-            : Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (BuildContext context) => Products(id, text)));
+            ? pushNewScreen(context,
+                screen: BestSeller(), platformSpecific: true, withNavBar: true)
+            : pushNewScreen(context,
+                screen: Products(id, text),
+                platformSpecific: true,
+                withNavBar: true);
       },
       child: new Container(
         width: 75,
@@ -881,10 +1066,10 @@ class _SpecialOfferCardState extends State<SpecialOfferCard> {
         padding: EdgeInsets.all(10),
         child: GestureDetector(
             onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (BuildContext context) => SpecialOffers()));
+              pushNewScreen(context,
+                  screen: SpecialOffers(),
+                  platformSpecific: true,
+                  withNavBar: true);
             },
             child: Container(
               child: Column(

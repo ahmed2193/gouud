@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:carousel_slider/carousel_options.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
@@ -5,17 +6,20 @@ import 'package:flutter_image/network.dart';
 import 'package:gouud/UI_EN/constants/BarContent.dart';
 import 'package:gouud/UI_EN/constants/gouudColors.dart';
 import 'package:gouud/login/view/Login.dart';
+import 'package:gouud/product/Logic/ProductLogic.dart';
+import 'package:gouud/product/model/CommentModel.dart';
 import 'package:gouud/product/model/ProductModel.dart';
 import 'package:gouud/product/provider/ProductProvider.dart';
-import 'package:gouud/sectionProducts/model/BestSellerModel.dart';
-import 'package:gouud/sectionProducts/provider/BestSellerProvider.dart';
+import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
+// import 'package:gouud/sectionProducts/model/BestSellerModel.dart';
+// import 'package:gouud/sectionProducts/provider/BestSellerProvider.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
 import 'package:toast/toast.dart';
 
 class Product extends StatefulWidget {
   static const id = 'Product';
-  final String url;
-  Product(this.url);
+  final String productId;
+  Product(this.productId);
   @override
   _ProductState createState() => _ProductState();
 }
@@ -24,16 +28,18 @@ class _ProductState extends State<Product> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   ProductProvider productObj;
   Future<ProductModel> productModel;
-  Future<BestSellerModel> bestSeller;
+  Future<CommentModel> commentModel;
+  bool newComment = false;
+  // Future<BestSellerModel> bestSeller;
   int productId;
   int quantity;
   int stateIndicator = 0;
   @override
   void initState() {
     super.initState();
-    productObj = new ProductProvider(widget.url);
+    productObj = new ProductProvider(widget.productId);
     productModel = productObj.productData();
-    bestSeller = BestSellerProvider().bestSellerData();
+    // bestSeller = BestSellerProvider().bestSellerData();
   }
 
   _setData(int productId, int quantity) {
@@ -78,6 +84,12 @@ class _ProductState extends State<Product> {
           gravity: Toast.BOTTOM,
         );
       }
+    });
+  }
+
+  refreshComment(comment) {
+    setState(() {
+      newComment = true;
     });
   }
 
@@ -144,77 +156,127 @@ class _ProductState extends State<Product> {
                   builder: (context, snapshot) {
                     if (snapshot.hasData) {
                       return ListView(
-                          // padding: EdgeInsets.only(bottom: 50, top: 20),
+                          padding: EdgeInsets.only(bottom: 60, top: 60),
                           children: <Widget>[
                             new Padding(
                               padding: EdgeInsets.all(10),
-                              child: CardItemSection(snapshot.data, _setData),
+                              child: CardItemSection(
+                                  snapshot.data.data, _setData, () {
+                                setState(() {
+                                  productModel = productObj.productData();
+                                });
+                              }),
                             ),
                             RatingTab('RATINGS'),
-                            new Container(
-                              child: GridView.count(
-                                controller: new ScrollController(
-                                    keepScrollOffset: false),
-                                shrinkWrap: true,
-                                // scrollDirection: Axis.vertical,
-                                crossAxisCount: 1,
-                                childAspectRatio: 4,
-                                padding: EdgeInsets.only(
-                                    bottom: 10, left: 10, right: 10, top: 10),
-                                mainAxisSpacing: 10,
-                                children: List.generate(2, (index) {
-                                  return CardRate('user.png', 'abdelhameed');
-                                }),
-                              ),
-                            ),
-                            NarrowCardViewAll('BEST SELLER', () {}),
-                            new Container(
-                              // padding: EdgeInsets.only(bottom: 50),
-                              margin: EdgeInsets.only(top: 20, bottom: 60),
-                              height: 300,
-                              child: FutureBuilder<BestSellerModel>(
-                                  future: bestSeller,
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      if (snapshot.data.data.length > 0) {
-                                        return GridView.count(
-                                          // controller: new ScrollController(keepScrollOffset: false),
-                                          // shrinkWrap: true,
-                                          scrollDirection: Axis.horizontal,
+                            !newComment
+                                ? snapshot.data.data.comments.length > 0
+                                    ? new Container(
+                                        child: GridView.count(
+                                          controller: new ScrollController(
+                                              keepScrollOffset: false),
+                                          shrinkWrap: true,
+                                          // scrollDirection: Axis.vertical,
                                           crossAxisCount: 1,
-                                          childAspectRatio: 1.6,
+                                          childAspectRatio: 4,
                                           padding: EdgeInsets.only(
-                                              bottom: 10, left: 5, right: 5),
+                                              bottom: 10,
+                                              left: 10,
+                                              right: 10,
+                                              top: 10),
+                                          mainAxisSpacing: 10,
                                           children: List.generate(
-                                              snapshot.data.data.length,
-                                              (index) {
-                                            return ProductCard(
-                                                snapshot
-                                                    .data.data[index].nameEn,
-                                                snapshot.data.data[index].brand
-                                                    .department.nameEn,
-                                                snapshot.data.data[index].price,
-                                                snapshot.data.data[index].rate,
-                                                snapshot.data.data[index]
-                                                    .images[0].image,
-                                                snapshot.data.data[index].id
-                                                    .toString());
+                                              snapshot.data.data.comments
+                                                  .length, (index) {
+                                            return CardRate(snapshot
+                                                .data.data.comments[index]);
                                           }),
+                                        ),
+                                      )
+                                    : Container()
+                                : FutureBuilder<CommentModel>(
+                                    future: commentModel,
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasData) {
+                                        new Container(
+                                          child: GridView.count(
+                                              controller: new ScrollController(
+                                                  keepScrollOffset: false),
+                                              shrinkWrap: true,
+                                              // scrollDirection: Axis.vertical,
+                                              crossAxisCount: 1,
+                                              childAspectRatio: 4,
+                                              padding: EdgeInsets.only(
+                                                  bottom: 10,
+                                                  left: 10,
+                                                  right: 10,
+                                                  top: 10),
+                                              mainAxisSpacing: 10,
+                                              children: List.generate(
+                                                  snapshot.data.count, (index) {
+                                                return Container();
+                                              })),
                                         );
                                       } else {
-                                        return Center(
-                                            child: Text(
-                                          'No Sections yet ...',
-                                          style: TextStyle(color: Colors.white),
-                                        ));
+                                        return Container();
                                       }
-                                    }
-                                    return Center(
-                                        child: CircularProgressIndicator(
-                                      backgroundColor: gouudBackgroundColor,
-                                    ));
-                                  }),
-                            ),
+                                      return Container(
+                                        height: 200,
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            backgroundColor:
+                                                gouudBackgroundColor,
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                            // NarrowCardViewAll('BEST SELLER', () {}),
+                            // new Container(
+                            //   // padding: EdgeInsets.only(bottom: 50),
+                            //   margin: EdgeInsets.only(top: 20, bottom: 60),
+                            //   height: 300,
+                            //   child: FutureBuilder<BestSellerModel>(
+                            //       future: bestSeller,
+                            //       builder: (context, snapshot) {
+                            //         if (snapshot.hasData) {
+                            //           if (snapshot.data.data.length > 0) {
+                            //             return GridView.count(
+                            //               // controller: new ScrollController(keepScrollOffset: false),
+                            //               // shrinkWrap: true,
+                            //               scrollDirection: Axis.horizontal,
+                            //               crossAxisCount: 1,
+                            //               childAspectRatio: 1.6,
+                            //               padding: EdgeInsets.only(
+                            //                   bottom: 10, left: 5, right: 5),
+                            //               children: List.generate(
+                            //                   snapshot.data.data.length,
+                            //                   (index) {
+                            //                 return ProductCard(
+                            //                     snapshot
+                            //                         .data.data[index].nameEn,
+                            //                     snapshot.data.data[index].brand
+                            //                         .department.nameEn,
+                            //                     snapshot.data.data[index].price,
+                            //                     snapshot.data.data[index].rate,
+                            //                     snapshot.data.data[index]
+                            //                         .images[0].image,
+                            //                     snapshot.data.data[index].id
+                            //                         .toString());
+                            //               }),
+                            //             );
+                            //           } else {
+                            //             return Center(
+                            //                 child: Text(
+                            //               'No Sections yet ...',
+                            //               style: TextStyle(color: Colors.white),
+                            //             ));
+                            //           }
+                            //         }
+                            //         return Center(
+                            //             child: CircularProgressIndicator(
+                            //           backgroundColor: gouudBackgroundColor,
+                            //         ));
+                            //       }),
+                            // ),
                           ]);
                     }
                     return Container(
@@ -254,27 +316,37 @@ class _ProductState extends State<Product> {
 }
 
 class CardItemSection extends StatefulWidget {
-  final ProductModel data;
+  final Data data;
   final Function(int, int) setData;
-  CardItemSection(this.data, this.setData);
+
+  final Function addComment;
+
+  CardItemSection(this.data, this.setData, this.addComment);
   @override
   _CardItemSectionState createState() => _CardItemSectionState();
 }
 
 class _CardItemSectionState extends State<CardItemSection> {
   int count = 1;
-  int productPrice = 0;
+  double productPrice = 0;
+  double userRate = 0;
+  int loading = 1;
+
+  final TextEditingController commentController = new TextEditingController();
+
   void initState() {
     super.initState();
-    productPrice = int.parse(widget.data.productPrice);
+    productPrice =
+        widget.data.price - (widget.data.price * (widget.data.discount / 100));
   }
 
   _increment() {
     setState(() {
       count = count + 1;
-      productPrice = int.parse(widget.data.productPrice);
+      productPrice = widget.data.price -
+          (widget.data.price * (widget.data.discount / 100));
       productPrice = productPrice * count;
-      widget.setData(widget.data.productID, count);
+      widget.setData(widget.data.id, count);
     });
   }
 
@@ -282,13 +354,53 @@ class _CardItemSectionState extends State<CardItemSection> {
     if (count > 1) {
       setState(() {
         count = count - 1;
-        productPrice = int.parse(widget.data.productPrice);
+        productPrice = widget.data.price -
+            (widget.data.price * (widget.data.discount / 100));
         if (count != 0) {
           productPrice = productPrice * count;
         }
-        widget.setData(widget.data.productID, count);
+        widget.setData(widget.data.id, count);
       });
     }
+  }
+
+  _setComment(productId, comment, rate) {
+    ProductLogic productLogic = new ProductLogic();
+    ProductProvider productProvider = new ProductProvider(productId.toString());
+    productLogic.checkLogin(productId.toString()).whenComplete(() {
+      if (productLogic.inner) {
+        setState(() {
+          loading = 2;
+        });
+        productProvider
+            .setComment(productId.toString(), comment, rate.toString())
+            .whenComplete(() {
+          print(productProvider.statusCode);
+          if (productProvider.statusCode == '201') {
+            setState(() {
+              loading = 1;
+            });
+            widget.addComment();
+            Toast.show("Comment has added successfully", context,
+                duration: 4, gravity: Toast.TOP);
+          } else {
+            Toast.show("server error please try later ", context,
+                duration: 4, gravity: Toast.TOP);
+          }
+        });
+      } else {
+        Toast.show("please login to complete the process", context,
+            duration: 4, gravity: Toast.CENTER);
+        Timer(new Duration(milliseconds: 1000), () {
+          pushNewScreen(
+            context,
+            screen: Login(),
+            platformSpecific: true,
+            withNavBar: false,
+          );
+        });
+      }
+    });
   }
 
   @override
@@ -301,7 +413,7 @@ class _CardItemSectionState extends State<CardItemSection> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
-              Imageshow(widget.data.productFiles),
+              Imageshow(widget.data.images, widget.data.discount.toString()),
               Row(
                 children: <Widget>[
                   Icon(
@@ -310,10 +422,118 @@ class _CardItemSectionState extends State<CardItemSection> {
                     size: 30,
                   ),
                   Padding(
-                    padding: EdgeInsets.only(right: 10, left: 10),
-                    child: Icon(Icons.chat_bubble_outline,
-                        color: gouudAppColor, size: 30),
-                  ),
+                      padding: EdgeInsets.only(right: 10, left: 10),
+                      child: GestureDetector(
+                        onTap: () {
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext context) => new Dialog(
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                            30.0)), //this right here
+                                    backgroundColor: gouudAppColor,
+                                    child: Container(
+                                      height: 200.0,
+                                      width: 300.0,
+                                      child: Padding(
+                                        padding: EdgeInsets.only(
+                                            right: 20, left: 20),
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
+                                          children: <Widget>[
+                                            TextField(
+                                              controller: commentController,
+                                              minLines: 1,
+                                              maxLines: 3,
+                                              autocorrect: false,
+                                              onChanged: (value) {},
+                                              decoration: InputDecoration(
+                                                hintText: 'WRITE A COMMENT',
+                                                hintStyle: TextStyle(
+                                                    color: gouudAppColor,
+                                                    fontSize: 12),
+                                                filled: true,
+                                                fillColor: Colors.white,
+                                                enabledBorder:
+                                                    OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.all(
+                                                          Radius.circular(
+                                                              25.0)),
+                                                  borderSide: BorderSide(
+                                                      color: Colors.grey),
+                                                ),
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.all(
+                                                          Radius.circular(
+                                                              25.0)),
+                                                  borderSide: BorderSide(
+                                                      color: Colors.grey),
+                                                ),
+                                              ),
+                                            ),
+                                            Center(
+                                                child: SmoothStarRating(
+                                              rating: 0,
+                                              isReadOnly: false,
+                                              size: 20,
+                                              color: gouudRate,
+                                              borderColor: gouudRate,
+                                              filledIconData: Icons.star,
+                                              halfFilledIconData:
+                                                  Icons.star_half,
+                                              defaultIconData:
+                                                  Icons.star_border,
+                                              starCount: 5,
+                                              allowHalfRating: true,
+                                              spacing: 2.0,
+                                              onRated: (value) {
+                                                userRate = value;
+                                              },
+                                            )),
+                                            Container(
+                                              height: 35,
+                                              margin: EdgeInsets.only(
+                                                  right: 30, left: 30),
+                                              decoration: new BoxDecoration(
+                                                color: gouudBackgroundColor,
+                                                borderRadius: BorderRadius.all(
+                                                  Radius.circular(25.0),
+                                                ),
+                                              ),
+                                              child: GestureDetector(
+                                                  onTap: () {
+                                                    _setComment(
+                                                        widget.data.id,
+                                                        commentController.text
+                                                            .trim(),
+                                                        userRate);
+                                                    // widget.refreshComment();
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: Center(
+                                                    child: Text(
+                                                      'Add',
+                                                      style: TextStyle(
+                                                          color: gouudWhite,
+                                                          fontSize: 12),
+                                                      textAlign:
+                                                          TextAlign.start,
+                                                    ),
+                                                  )),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ));
+                        },
+                        child: Icon(Icons.chat_bubble_outline,
+                            color: gouudAppColor, size: 30),
+                      )),
                   Icon(Icons.share, color: gouudAppColor, size: 30),
                 ],
               ),
@@ -322,19 +542,19 @@ class _CardItemSectionState extends State<CardItemSection> {
                 children: <Widget>[
                   Container(
                     child: Text(
-                      widget.data.productName,
+                      widget.data.nameEn,
                       style: TextStyle(color: gouudAppColor, fontSize: 14),
                       textAlign: TextAlign.center,
                     ),
                   ),
                 ],
               ),
-              Container(
-                child: Text(
-                  widget.data.productDescription,
-                  style: TextStyle(color: gouudAppColor, fontSize: 10),
-                ),
-              ),
+              // Container(
+              //   child: Text(
+              //     widget.data.descritpionEn + "",
+              //     style: TextStyle(color: gouudAppColor, fontSize: 10),
+              //   ),
+              // ),
               Padding(
                 padding: EdgeInsets.only(top: 20),
                 child: Row(
@@ -350,7 +570,7 @@ class _CardItemSectionState extends State<CardItemSection> {
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: <Widget>[
                                 Text(
-                                  '30 SAR',
+                                  widget.data.price.toString() + '',
                                   style: TextStyle(
                                       fontSize: 8,
                                       color: gouudAppColor,
@@ -467,7 +687,7 @@ class _CardItemSectionState extends State<CardItemSection> {
                           ),
                           Center(
                               child: SmoothStarRating(
-                            rating: widget.data.productRate,
+                            rating: widget.data.rate,
                             isReadOnly: true,
                             size: 20,
                             color: gouudAppColor,
@@ -496,6 +716,8 @@ class _CardItemSectionState extends State<CardItemSection> {
       ],
     );
   }
+
+  Dialog commentDialog(setComment(comment), setRate(rate)) => Dialog();
 }
 
 class CardBestSeller extends StatefulWidget {
@@ -565,7 +787,7 @@ class _CardBestSellerState extends State<CardBestSeller> {
                           Center(
                               child: SmoothStarRating(
                             rating: rating,
-                            isReadOnly: false,
+                            isReadOnly: true,
                             size: 20,
                             color: gouudAppColor,
                             borderColor: gouudAppColor,
@@ -739,9 +961,8 @@ class _RatingTabState extends State<RatingTab> {
 }
 
 class CardRate extends StatefulWidget {
-  final String image;
-  final String text;
-  CardRate(this.image, this.text);
+  final Comments data;
+  CardRate(this.data);
   @override
   _CardRateState createState() => _CardRateState();
 }
@@ -761,10 +982,11 @@ class _CardRateState extends State<CardRate> {
               Padding(
                 padding: EdgeInsets.only(right: 10, top: 10, bottom: 10),
                 child: Image(
-                  width: 50,
-                  height: 50,
-                  image: AssetImage('assets/icons/' + widget.image),
-                ),
+                    width: 50,
+                    height: 50,
+                    image: new NetworkImageWithRetry(
+                      widget.data.user.image,
+                    )),
               ),
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -772,15 +994,15 @@ class _CardRateState extends State<CardRate> {
                 children: <Widget>[
                   GestureDetector(
                     child: Text(
-                      widget.text,
+                      widget.data.user.name,
                       style: TextStyle(color: gouudWhite, fontSize: 14),
                     ),
                     onTap: () {},
                   ),
                   Center(
                       child: SmoothStarRating(
-                    rating: rating,
-                    isReadOnly: false,
+                    rating: widget.data.rate.toDouble(),
+                    isReadOnly: true,
                     size: 20,
                     color: gouudBackgroundColor,
                     borderColor: gouudBackgroundColor,
@@ -798,7 +1020,7 @@ class _CardRateState extends State<CardRate> {
                   GestureDetector(
                       onTap: () {},
                       child: Text(
-                        'this vehicle is very good',
+                        widget.data.text,
                         style: TextStyle(color: gouudFontColor, fontSize: 12),
                       ))
                 ],
@@ -825,8 +1047,9 @@ class _CardRateState extends State<CardRate> {
 }
 
 class Imageshow extends StatefulWidget {
-  final List<ProductFiles> data;
-  Imageshow(this.data);
+  final String discount;
+  final List<Images> data;
+  Imageshow(this.data, this.discount);
   @override
   _ImageshowState createState() => _ImageshowState();
 }
@@ -849,7 +1072,7 @@ class _ImageshowState extends State<Imageshow> {
                       children: <Widget>[
                         Image(
                             image: new NetworkImageWithRetry(
-                              item.filePath,
+                              item.image,
                             ),
                             fit: BoxFit.contain),
                         Positioned(
@@ -903,7 +1126,7 @@ class _ImageshowState extends State<Imageshow> {
                       height: 25,
                       child: Center(
                           child: Text(
-                        '-35%',
+                        widget.discount + '%',
                         style: TextStyle(color: gouudWhite),
                         textAlign: TextAlign.center,
                       )),
@@ -962,8 +1185,8 @@ class _ImageshowState extends State<Imageshow> {
                                     child: Padding(
                                       padding: EdgeInsets.all(5),
                                       child: Image(
-                                          image: NetworkImageWithRetry(
-                                              url.filePath),
+                                          image:
+                                              NetworkImageWithRetry(url.image),
                                           fit: BoxFit.contain),
                                     ))),
                           ),
@@ -1001,63 +1224,63 @@ class _ProductCardState extends State<ProductCard> {
   Widget build(BuildContext context) {
     return Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
-        child: GestureDetector(
-            onTap: () {
-              Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (BuildContext context) =>
-                          Product(widget.navigationUrl)));
-            },
-            child: Container(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Expanded(
-                    flex: 6,
-                    child: Container(
-                      decoration: new BoxDecoration(
-                        color: gouudWhite,
-                        boxShadow: [
-                          BoxShadow(color: gouudAppColor, spreadRadius: 1)
-                        ],
-                        borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(25.0),
-                            topRight: Radius.circular(25.0)),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: <Widget>[
-                          Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Container(
-                                  width: 60,
-                                  height: 25,
-                                  child: Center(
-                                      child: Text(
-                                    '-35%',
-                                    style: TextStyle(color: gouudWhite),
-                                    textAlign: TextAlign.center,
-                                  )),
-                                  decoration: new BoxDecoration(
-                                    color: gouudBackgroundColor,
-                                    borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(25.0),
-                                        bottomRight: Radius.circular(25.0)),
-                                  ),
-                                ),
-                                Padding(
-                                    padding: EdgeInsets.only(right: 10, top: 5),
-                                    child: Icon(
-                                      Icons.favorite_border,
-                                      color: gouudAppColor,
-                                      size: 30,
-                                    ))
-                              ]),
-                          Expanded(
-                            flex: 3,
+        child: Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(
+                flex: 6,
+                child: Container(
+                  decoration: new BoxDecoration(
+                    color: gouudWhite,
+                    boxShadow: [
+                      BoxShadow(color: gouudAppColor, spreadRadius: 1)
+                    ],
+                    borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(25.0),
+                        topRight: Radius.circular(25.0)),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            Container(
+                              width: 60,
+                              height: 25,
+                              child: Center(
+                                  child: Text(
+                                '-35%',
+                                style: TextStyle(color: gouudWhite),
+                                textAlign: TextAlign.center,
+                              )),
+                              decoration: new BoxDecoration(
+                                color: gouudBackgroundColor,
+                                borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(25.0),
+                                    bottomRight: Radius.circular(25.0)),
+                              ),
+                            ),
+                            Padding(
+                                padding: EdgeInsets.only(right: 10, top: 5),
+                                child: Icon(
+                                  Icons.favorite_border,
+                                  color: gouudAppColor,
+                                  size: 30,
+                                ))
+                          ]),
+                      Expanded(
+                          flex: 3,
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (BuildContext context) =>
+                                          Product(widget.navigationUrl)));
+                            },
                             child: Padding(
                               padding: EdgeInsets.all(2),
                               child: ClipRRect(
@@ -1069,104 +1292,101 @@ class _ProductCardState extends State<ProductCard> {
                                         widget.photoUrl),
                                   )),
                             ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Column(
+                          )),
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: <Widget>[
+                            Center(
+                                child: SmoothStarRating(
+                              rating: widget.rate,
+                              isReadOnly: true,
+                              size: 20,
+                              color: gouudAppColor,
+                              borderColor: gouudAppColor,
+                              filledIconData: Icons.star,
+                              halfFilledIconData: Icons.star_half,
+                              defaultIconData: Icons.star_border,
+                              starCount: 5,
+                              allowHalfRating: true,
+                              spacing: 2.0,
+                              onRated: (value) {
+                                // print("rating value -> $value");
+                                // print("rating value dd -> ${value.truncate()}");
+                              },
+                            )),
+                            Center(
+                              child: Text(
+                                widget.productName,
+                                style: TextStyle(fontSize: 8),
+                              ),
+                            ),
+                            Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: <Widget>[
-                                Center(
-                                    child: SmoothStarRating(
-                                  rating: widget.rate,
-                                  isReadOnly: true,
-                                  size: 20,
-                                  color: gouudAppColor,
-                                  borderColor: gouudAppColor,
-                                  filledIconData: Icons.star,
-                                  halfFilledIconData: Icons.star_half,
-                                  defaultIconData: Icons.star_border,
-                                  starCount: 5,
-                                  allowHalfRating: true,
-                                  spacing: 2.0,
-                                  onRated: (value) {
-                                    // print("rating value -> $value");
-                                    // print("rating value dd -> ${value.truncate()}");
-                                  },
-                                )),
-                                Center(
-                                  child: Text(
-                                    widget.productName,
-                                    style: TextStyle(fontSize: 8),
-                                  ),
+                                Text(
+                                  widget.price,
+                                  style: TextStyle(
+                                      fontSize: 8, color: gouudAppColor),
                                 ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: <Widget>[
-                                    Text(
-                                      widget.price,
-                                      style: TextStyle(
-                                          fontSize: 8, color: gouudAppColor),
-                                    ),
-                                    Container(
-                                      width: 60,
-                                      height: 20,
-                                      child: Center(
-                                          child: Text(
-                                        'PARTS',
-                                        style: TextStyle(
-                                            fontSize: 8, color: gouudAppColor),
-                                      )),
-                                      decoration: new BoxDecoration(
-                                        color: gouudWhite,
-                                        boxShadow: [
-                                          BoxShadow(
-                                              color: gouudAppColor,
-                                              spreadRadius: 1)
-                                        ],
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(10.0)),
-                                      ),
-                                    )
-                                  ],
+                                Container(
+                                  width: 60,
+                                  height: 20,
+                                  child: Center(
+                                      child: Text(
+                                    'PARTS',
+                                    style: TextStyle(
+                                        fontSize: 8, color: gouudAppColor),
+                                  )),
+                                  decoration: new BoxDecoration(
+                                    color: gouudWhite,
+                                    boxShadow: [
+                                      BoxShadow(
+                                          color: gouudAppColor, spreadRadius: 1)
+                                    ],
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(10.0)),
+                                  ),
                                 )
                               ],
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
+                            )
+                          ],
+                        ),
+                      )
+                    ],
                   ),
-                  Expanded(
-                      child: Container(
-                          decoration: new BoxDecoration(
-                            color: gouudAppColor,
-                            boxShadow: [
-                              BoxShadow(color: gouudAppColor, spreadRadius: 1)
-                            ],
-                            borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(25.0),
-                              bottomRight: Radius.circular(25.0),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: <Widget>[
-                              Icon(
-                                Icons.shopping_cart,
-                                color: gouudWhite,
-                              ),
-                              Text(
-                                "ADD TO CART",
-                                style:
-                                    TextStyle(color: gouudWhite, fontSize: 10),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          )))
-                ],
+                ),
               ),
-            )));
+              Expanded(
+                  child: Container(
+                      decoration: new BoxDecoration(
+                        color: gouudAppColor,
+                        boxShadow: [
+                          BoxShadow(color: gouudAppColor, spreadRadius: 1)
+                        ],
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(25.0),
+                          bottomRight: Radius.circular(25.0),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: <Widget>[
+                          Icon(
+                            Icons.shopping_cart,
+                            color: gouudWhite,
+                          ),
+                          Text(
+                            "ADD TO CART",
+                            style: TextStyle(color: gouudWhite, fontSize: 10),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      )))
+            ],
+          ),
+        ));
   }
 }
 

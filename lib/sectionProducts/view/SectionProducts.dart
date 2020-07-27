@@ -1,10 +1,18 @@
+import 'dart:async';
+
 import 'package:carousel_slider/carousel_options.dart';
 import 'package:flutter/material.dart';
 import 'package:gouud/UI_EN/constants/BarContent.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:gouud/UI_EN/constants/gouudColors.dart';
+import 'package:gouud/bestSeller/model/AllBestSellerModel.dart';
+import 'package:gouud/bestSeller/view/BestSeller.dart';
+import 'package:gouud/home/Logic/HomeLogic.dart';
+import 'package:gouud/home/provider/HomeProvider.dart';
+import 'package:gouud/login/view/Login.dart';
 import 'package:gouud/product/view/Product.dart';
 import 'package:gouud/products/view/Products.dart';
+import 'package:gouud/sectionProducts/model/AdsModel.dart';
 import 'package:gouud/sectionProducts/model/BestSellerModel.dart';
 import 'package:gouud/sectionProducts/model/SectionProductsModel.dart';
 import 'package:gouud/sectionProducts/provider/BestSellerProvider.dart';
@@ -13,44 +21,14 @@ import 'package:gouud/specialOffers/view/SpecialOffers.dart';
 import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
 import 'package:smooth_star_rating/smooth_star_rating.dart';
 import 'package:flutter_image/network.dart';
+import 'package:toast/toast.dart';
 
 final List<String> imageList = [
   "assets/icons/slide2.png",
   "assets/icons/slide3.png",
 ];
 
-int _current = 0;
-final List<Widget> imageSliders = imageList
-    .map((item) => Container(
-          child: Container(
-            margin: EdgeInsets.all(5.0),
-            child: ClipRRect(
-                borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                child: Stack(
-                  children: <Widget>[
-                    Image.asset(item, fit: BoxFit.cover, width: 1000.0),
-                    Positioned(
-                      bottom: 0.0,
-                      left: 0.0,
-                      right: 0.0,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Color.fromARGB(200, 0, 0, 0),
-                              Color.fromARGB(0, 0, 0, 0)
-                            ],
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )),
-          ),
-        ))
-    .toList();
+int current = 0;
 
 class SectionProducts extends StatefulWidget {
   static const id = 'SectionProducts';
@@ -70,13 +48,25 @@ class _SectionProductsState extends State<SectionProducts> {
 
   Future<BestSellerModel> bestSeller;
   Future<SectionProductsModel> sectionProducts;
+  Future<AdsModel> adverisements;
+  List<String> cartProducts;
+  List<String> quantityProducts;
+  List<String> favouriteProducts;
   @override
   void initState() {
     super.initState();
+    adverisements = SectionProductsProvider().adsData();
+
     bestSeller = BestSellerProvider().bestSellerData();
     sectionProducts =
         SectionProductsProvider().sectionProductsData(widget.departmentId);
     print(sectionProducts);
+    HomeProvider homeProvider = new HomeProvider();
+    homeProvider.getDataList().whenComplete(() {
+      cartProducts = homeProvider.cartIds;
+      quantityProducts = homeProvider.cartIdsQuantity;
+      favouriteProducts = homeProvider.favouriteIds;
+    });
   }
 
   @override
@@ -135,37 +125,26 @@ class _SectionProductsState extends State<SectionProducts> {
                         fit: BoxFit.cover)),
               ),
               ListView(children: <Widget>[
-                CarouselSlider(
-                  items: imageSliders,
-                  options: CarouselOptions(
-                      autoPlay: true,
-                      enlargeCenterPage: true,
-                      aspectRatio: 3.0,
-                      onPageChanged: (index, reason) {
-                        setState(() {
-                          _current = index;
-                        });
-                      }),
-                ),
-                new Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: imageList.map((url) {
-                    int index = imageList.indexOf(url);
-                    return Container(
-                      width: 8.0,
-                      height: 8.0,
-                      margin:
-                          EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _current == index
-                            ? gouudAppColor
-                            : gouudBackgroundColor,
-                      ),
-                    );
-                  }).toList(),
-                ),
-                NarrowCardViewAllOther('BEST SELLER', 'BestSeller'),
+                FutureBuilder<AdsModel>(
+                    future: adverisements,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        if (snapshot.data.data.length > 0) {
+                          return Ads(snapshot.data);
+                        } else {
+                          return Center(
+                              child: Text(
+                            'No best seller yet ...',
+                            style: TextStyle(color: Colors.white),
+                          ));
+                        }
+                      }
+                      return Center(
+                          child: CircularProgressIndicator(
+                        backgroundColor: gouudBackgroundColor,
+                      ));
+                    }),
+                NarrowCardViewAll('BEST SELLER', 'BestSeller', ''),
                 new Container(
                   margin: EdgeInsets.only(top: 20, bottom: 0),
                   height: 300,
@@ -179,7 +158,7 @@ class _SectionProductsState extends State<SectionProducts> {
                               // shrinkWrap: true,
                               scrollDirection: Axis.horizontal,
                               crossAxisCount: 1,
-                              childAspectRatio: 1.7,
+                              childAspectRatio: 1.6,
                               padding: EdgeInsets.only(
                                   bottom: 10, left: 5, right: 5),
                               children: List.generate(snapshot.data.data.length,
@@ -188,16 +167,28 @@ class _SectionProductsState extends State<SectionProducts> {
                                     snapshot.data.data[index].nameEn,
                                     snapshot.data.data[index].brand.department
                                         .nameEn,
-                                    snapshot.data.data[index].price,
+                                    snapshot.data.data[index].price.toString(),
                                     snapshot.data.data[index].rate,
                                     snapshot.data.data[index].images[0].image,
-                                    snapshot.data.data[index].id.toString());
+                                    snapshot.data.data[index].id.toString(),
+                                    cartProducts,
+                                    quantityProducts,
+                                    favouriteProducts, (value) {
+                                  setState(() {
+                                    cartProducts.add(value);
+                                    quantityProducts.add('1');
+                                  });
+                                }, (value) {
+                                  setState(() {
+                                    favouriteProducts.add(value);
+                                  });
+                                });
                               }),
                             );
                           } else {
                             return Center(
                                 child: Text(
-                              'No Sections yet ...',
+                              'No best seller yet ...',
                               style: TextStyle(color: Colors.white),
                             ));
                           }
@@ -208,7 +199,7 @@ class _SectionProductsState extends State<SectionProducts> {
                         ));
                       }),
                 ),
-                NarrowCardViewAllOther('DAILY DEALS', ''),
+                NarrowCardViewAll('DAILY DEALS', 'BestSeller', ''),
                 new Container(
                   child: GridView.count(
                     controller: new ScrollController(keepScrollOffset: false),
@@ -246,7 +237,19 @@ class _SectionProductsState extends State<SectionProducts> {
                                     snapshot.data.data[index].nameEn,
                                     snapshot.data.data[index].id.toString(),
                                     snapshot.data.data[index].department.nameEn,
-                                    snapshot.data.data[index].product);
+                                    snapshot.data.data[index].product,
+                                    cartProducts,
+                                    quantityProducts,
+                                    favouriteProducts, (value) {
+                                  setState(() {
+                                    cartProducts.add(value);
+                                    quantityProducts.add('1');
+                                  });
+                                }, (value) {
+                                  setState(() {
+                                    favouriteProducts.add(value);
+                                  });
+                                });
                               }),
                             );
                           } else {
@@ -289,6 +292,92 @@ class _SectionProductsState extends State<SectionProducts> {
     return PreferredSize(
         preferredSize: const Size(double.infinity, 70),
         child: UpperBar(_scaffoldKey));
+  }
+}
+
+class Ads extends StatefulWidget {
+  final AdsModel data;
+  Ads(this.data);
+  @override
+  _AdsState createState() => _AdsState();
+}
+
+class _AdsState extends State<Ads> {
+  int current = 0;
+  List<Widget> imageSliders;
+  @override
+  void initState() {
+    super.initState();
+    imageSliders = widget.data.data
+        .map((item) => Container(
+              child: Container(
+                margin: EdgeInsets.all(5.0),
+                child: ClipRRect(
+                    borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                    child: Stack(
+                      children: <Widget>[
+                        new Image(
+                          image: new NetworkImageWithRetry(item.image),
+                          fit: BoxFit.cover,
+                          width: 1000,
+                        ),
+                        Positioned(
+                          bottom: 0.0,
+                          left: 0.0,
+                          right: 0.0,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Color.fromARGB(200, 0, 0, 0),
+                                  Color.fromARGB(0, 0, 0, 0)
+                                ],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )),
+              ),
+            ))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        CarouselSlider(
+          items: imageSliders,
+          options: CarouselOptions(
+              autoPlay: true,
+              enlargeCenterPage: true,
+              aspectRatio: 3.0,
+              onPageChanged: (index, reason) {
+                setState(() {
+                  current = index;
+                });
+              }),
+        ),
+        new Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: widget.data.data.map((url) {
+            int index = widget.data.data.indexOf(url);
+            return Container(
+              width: 8.0,
+              height: 8.0,
+              margin: EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: current == index ? gouudAppColor : gouudBackgroundColor,
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
   }
 }
 
@@ -423,74 +512,196 @@ class ProductCard extends StatefulWidget {
   final String price;
   final double rate;
   final String photoUrl;
-  final String navigationUrl;
-  ProductCard(this.productName, this.departmentName, this.price, this.rate,
-      this.photoUrl, this.navigationUrl);
+  final String id;
+  final List<String> cartProducts;
+  final List<String> quantityProducts;
+  final List<String> favouriteProducts;
+  final Function(String) addToCartList;
+  final Function(String) addToFavouriteList;
+  ProductCard(
+      this.productName,
+      this.departmentName,
+      this.price,
+      this.rate,
+      this.photoUrl,
+      this.id,
+      this.cartProducts,
+      this.quantityProducts,
+      this.favouriteProducts,
+      this.addToCartList,
+      this.addToFavouriteList);
   @override
   _ProductCardState createState() => _ProductCardState();
 }
 
 class _ProductCardState extends State<ProductCard> {
+  int loading = 1;
+  int inCart;
+  int infavourite;
+
+  void initState() {
+    super.initState();
+    if (widget.cartProducts.contains(widget.id.toString())) {
+      inCart = 2;
+    } else {
+      inCart = 1;
+    }
+    if (widget.favouriteProducts.contains(widget.id.toString())) {
+      infavourite = 2;
+    } else {
+      infavourite = 1;
+    }
+  }
+
+  addToCart(productId) {
+    HomeLogic homeLogic = new HomeLogic();
+    HomeProvider homeProvider = new HomeProvider();
+    homeLogic.checkLogin().whenComplete(() {
+      if (homeLogic.inner) {
+        setState(() {
+          loading = 2;
+        });
+        homeProvider.cart(productId, 1).whenComplete(() {
+          print(homeProvider.statusCode);
+          if (homeProvider.statusCode == '201') {
+            setState(() {
+              inCart = 2;
+              loading = 1;
+              widget.addToCartList(productId);
+            });
+            Toast.show("Product has added to cart", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          } else if (homeProvider.statusCode == '422') {
+            Toast.show("Product already in cart", context,
+                duration: 4, gravity: Toast.BOTTOM);
+            setState(() {
+              loading = 1;
+            });
+          } else {
+            Toast.show("server error please try later ", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          }
+        });
+      } else {
+        Toast.show("please login to complete the process", context,
+            duration: 4, gravity: Toast.CENTER);
+        Timer(new Duration(milliseconds: 1000), () {
+          pushNewScreen(
+            context,
+            screen: Login(),
+            platformSpecific: true,
+            withNavBar: false,
+          );
+        });
+      }
+    });
+  }
+
+  addToFavourite(productId) {
+    HomeLogic homeLogic = new HomeLogic();
+    HomeProvider homeProvider = new HomeProvider();
+    homeLogic.checkLogin().whenComplete(() {
+      if (homeLogic.inner) {
+        homeProvider.favourite(productId).whenComplete(() {
+          print(homeProvider.statusCode);
+          if (homeProvider.statusCode == '201') {
+            setState(() {
+              infavourite = 2;
+              widget.addToFavouriteList(productId);
+            });
+            Toast.show("Product has added to favourite", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          } else if (homeProvider.statusCode == '422') {
+            Toast.show("Product already in favourite", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          } else {
+            Toast.show("server error please try later ", context,
+                duration: 4, gravity: Toast.BOTTOM);
+          }
+        });
+      } else {
+        Toast.show("please login to complete the process", context,
+            duration: 4, gravity: Toast.CENTER);
+        Timer(new Duration(milliseconds: 1000), () {
+          pushNewScreen(
+            context,
+            screen: Login(),
+            platformSpecific: true,
+            withNavBar: false,
+          );
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
-        child: GestureDetector(
-            onTap: () {
-              pushNewScreen(context,
-                  screen: Product(widget.navigationUrl),
-                  platformSpecific: true,
-                  withNavBar: false);
-            },
-            child: Container(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Expanded(
-                    flex: 6,
-                    child: Container(
-                      decoration: new BoxDecoration(
-                        color: gouudWhite,
-                        boxShadow: [
-                          BoxShadow(color: gouudAppColor, spreadRadius: 1)
-                        ],
-                        borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(25.0),
-                            topRight: Radius.circular(25.0)),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: <Widget>[
-                          Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Container(
-                                  width: 60,
-                                  height: 25,
-                                  child: Center(
-                                      child: Text(
-                                    '-35%',
-                                    style: TextStyle(color: gouudWhite),
-                                    textAlign: TextAlign.center,
-                                  )),
-                                  decoration: new BoxDecoration(
-                                    color: gouudBackgroundColor,
-                                    borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(25.0),
-                                        bottomRight: Radius.circular(25.0)),
-                                  ),
-                                ),
-                                Padding(
+        child: Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(
+                flex: 6,
+                child: Container(
+                  decoration: new BoxDecoration(
+                    color: gouudWhite,
+                    boxShadow: [
+                      BoxShadow(color: gouudAppColor, spreadRadius: 1)
+                    ],
+                    borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(25.0),
+                        topRight: Radius.circular(25.0)),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            Container(
+                              width: 60,
+                              height: 25,
+                              child: Center(
+                                  child: Text(
+                                '-35%',
+                                style: TextStyle(color: gouudWhite),
+                                textAlign: TextAlign.center,
+                              )),
+                              decoration: new BoxDecoration(
+                                color: gouudBackgroundColor,
+                                borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(25.0),
+                                    bottomRight: Radius.circular(25.0)),
+                              ),
+                            ),
+                            GestureDetector(
+                                onTap: () {
+                                  addToFavourite(widget.id);
+                                },
+                                child: Padding(
                                     padding: EdgeInsets.only(right: 10, top: 5),
                                     child: Icon(
-                                      Icons.favorite_border,
-                                      color: gouudAppColor,
+                                      infavourite == 1
+                                          ? Icons.favorite_border
+                                          : Icons.favorite,
+                                      color: infavourite == 1
+                                          ? gouudAppColor
+                                          : gouudFavourite,
                                       size: 30,
-                                    ))
-                              ]),
-                          Expanded(
-                            flex: 3,
+                                    )))
+                          ]),
+                      Expanded(
+                          flex: 3,
+                          child: GestureDetector(
+                            onTap: () {
+                              pushNewScreen(context,
+                                  screen: Product(widget.id),
+                                  platformSpecific: true,
+                                  withNavBar: false);
+                            },
                             child: Padding(
                               padding: EdgeInsets.all(2),
                               child: ClipRRect(
@@ -502,75 +713,77 @@ class _ProductCardState extends State<ProductCard> {
                                         widget.photoUrl),
                                   )),
                             ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Column(
+                          )),
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: <Widget>[
+                            Center(
+                                child: SmoothStarRating(
+                              rating: widget.rate,
+                              isReadOnly: true,
+                              size: 20,
+                              color: gouudAppColor,
+                              borderColor: gouudAppColor,
+                              filledIconData: Icons.star,
+                              halfFilledIconData: Icons.star_half,
+                              defaultIconData: Icons.star_border,
+                              starCount: 5,
+                              allowHalfRating: true,
+                              spacing: 2.0,
+                              onRated: (value) {
+                                // print("rating value -> $value");
+                                // print("rating value dd -> ${value.truncate()}");
+                              },
+                            )),
+                            Center(
+                              child: Text(
+                                widget.productName,
+                                style: TextStyle(fontSize: 8),
+                              ),
+                            ),
+                            Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: <Widget>[
-                                Center(
-                                    child: SmoothStarRating(
-                                  rating: widget.rate,
-                                  isReadOnly: true,
-                                  size: 20,
-                                  color: gouudAppColor,
-                                  borderColor: gouudAppColor,
-                                  filledIconData: Icons.star,
-                                  halfFilledIconData: Icons.star_half,
-                                  defaultIconData: Icons.star_border,
-                                  starCount: 5,
-                                  allowHalfRating: true,
-                                  spacing: 2.0,
-                                  onRated: (value) {
-                                    // print("rating value -> $value");
-                                    // print("rating value dd -> ${value.truncate()}");
-                                  },
-                                )),
-                                Center(
-                                  child: Text(
-                                    widget.productName,
-                                    style: TextStyle(fontSize: 8),
-                                  ),
+                                Text(
+                                  widget.price,
+                                  style: TextStyle(
+                                      fontSize: 8, color: gouudAppColor),
                                 ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: <Widget>[
-                                    Text(
-                                      widget.price,
-                                      style: TextStyle(
-                                          fontSize: 8, color: gouudAppColor),
-                                    ),
-                                    Container(
-                                      width: 60,
-                                      height: 20,
-                                      child: Center(
-                                          child: Text(
-                                        'PARTS',
-                                        style: TextStyle(
-                                            fontSize: 8, color: gouudAppColor),
-                                      )),
-                                      decoration: new BoxDecoration(
-                                        color: gouudWhite,
-                                        boxShadow: [
-                                          BoxShadow(
-                                              color: gouudAppColor,
-                                              spreadRadius: 1)
-                                        ],
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(10.0)),
-                                      ),
-                                    )
-                                  ],
+                                Container(
+                                  width: 60,
+                                  height: 20,
+                                  child: Center(
+                                      child: Text(
+                                    'PARTS',
+                                    style: TextStyle(
+                                        fontSize: 8, color: gouudAppColor),
+                                  )),
+                                  decoration: new BoxDecoration(
+                                    color: gouudWhite,
+                                    boxShadow: [
+                                      BoxShadow(
+                                          color: gouudAppColor, spreadRadius: 1)
+                                    ],
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(10.0)),
+                                  ),
                                 )
                               ],
-                            ),
-                          )
-                        ],
-                      ),
-                    ),
+                            )
+                          ],
+                        ),
+                      )
+                    ],
                   ),
-                  Expanded(
+                ),
+              ),
+              Expanded(
+                  child: GestureDetector(
+                      onTap: () {
+                        addToCart(widget.id);
+                      },
                       child: Container(
                           decoration: new BoxDecoration(
                             color: gouudAppColor,
@@ -585,10 +798,16 @@ class _ProductCardState extends State<ProductCard> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: <Widget>[
-                              Icon(
-                                Icons.shopping_cart,
-                                color: gouudWhite,
-                              ),
+                              loading == 1
+                                  ? Icon(
+                                      Icons.shopping_cart,
+                                      color:
+                                          inCart == 1 ? gouudWhite : gouudGreen,
+                                    )
+                                  : Center(
+                                      child: CircularProgressIndicator(
+                                      backgroundColor: gouudBackgroundColor,
+                                    )),
                               Text(
                                 "ADD TO CART",
                                 style:
@@ -596,10 +815,10 @@ class _ProductCardState extends State<ProductCard> {
                                 textAlign: TextAlign.center,
                               ),
                             ],
-                          )))
-                ],
-              ),
-            )));
+                          ))))
+            ],
+          ),
+        ));
   }
 }
 
@@ -608,7 +827,21 @@ class ScrolProducts extends StatefulWidget {
   final String id;
   final String department;
   final List<ProductsData> productsCards;
-  ScrolProducts(this.brandName, this.id, this.department, this.productsCards);
+  final List<String> cartProducts;
+  final List<String> quantityProducts;
+  final List<String> favouriteProducts;
+  final Function(String) addToCartList;
+  final Function(String) addToFavouriteList;
+  ScrolProducts(
+      this.brandName,
+      this.id,
+      this.department,
+      this.productsCards,
+      this.cartProducts,
+      this.quantityProducts,
+      this.favouriteProducts,
+      this.addToCartList,
+      this.addToFavouriteList);
   @override
   _ScrolProductsState createState() => _ScrolProductsState();
 }
@@ -625,7 +858,7 @@ class _ScrolProductsState extends State<ScrolProducts> {
           children: <Widget>[
             Padding(
               padding: EdgeInsets.only(bottom: 20),
-              child: NarrowCardViewAll(widget.brandName, widget.id),
+              child: NarrowCardViewAll(widget.brandName, 'Products', widget.id),
             ),
             // Container(
             //   height: 20,
@@ -648,7 +881,12 @@ class _ScrolProductsState extends State<ScrolProducts> {
                       widget.productsCards[index].price,
                       widget.productsCards[index].rate,
                       widget.productsCards[index].images[0].image,
-                      widget.productsCards[index].id.toString());
+                      widget.productsCards[index].id.toString(),
+                      widget.cartProducts,
+                      widget.quantityProducts,
+                      widget.favouriteProducts,
+                      widget.addToCartList,
+                      widget.addToFavouriteList);
                 }),
               ),
             ))
@@ -733,9 +971,10 @@ class _NarrowCardState extends State<NarrowCard> {
 }
 
 class NarrowCardViewAll extends StatefulWidget {
+  final String navigate;
   final String text;
   final String id;
-  NarrowCardViewAll(this.text, this.id);
+  NarrowCardViewAll(this.text, this.navigate, this.id);
 
   @override
   _NarrowCardViewAllState createState() => _NarrowCardViewAllState();
@@ -744,132 +983,69 @@ class NarrowCardViewAll extends StatefulWidget {
 class _NarrowCardViewAllState extends State<NarrowCardViewAll> {
   @override
   Widget build(BuildContext context) {
-    return Padding(
-        padding: EdgeInsets.only(left: 20, right: 20, top: 20),
-        child: Container(
-          height: 40,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.only(left: 15),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    GestureDetector(
-                      child: Text(
-                        widget.text,
-                        style: TextStyle(color: gouudWhite, fontSize: 10),
-                      ),
-                      onTap: () {},
+    return GestureDetector(
+        onTap: () {
+          //   Navigator.push(context,
+          //       MaterialPageRoute(builder: (BuildContext context) => Products()));
+        },
+        child: Padding(
+            padding: EdgeInsets.only(left: 20, right: 20, top: 20),
+            child: Container(
+              height: 40,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.only(left: 15),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        GestureDetector(
+                          child: Text(
+                            widget.text,
+                            style: TextStyle(color: gouudWhite, fontSize: 10),
+                          ),
+                          onTap: () {},
+                        ),
+                        // GestureDetector(
+                        //     onTap: () {},
+                        //     child: Text(
+                        //       '',
+                        //       style:
+                        //           TextStyle(color: gouudFontColor, fontSize: 8),
+                        //     ))
+                      ],
                     ),
-                    // GestureDetector(
-                    //     onTap: () {},
-                    //     child: Text(
-                    //       'this water is very good',
-                    //       style: TextStyle(color: gouudFontColor, fontSize: 8),
-                    //     ))
-                  ],
-                ),
+                  ),
+                  Padding(
+                      padding: EdgeInsets.all(5),
+                      child: narrowContainer(
+                          widget.text, widget.navigate, widget.id)),
+                ],
               ),
-              Padding(
-                  padding: EdgeInsets.all(5),
-                  child: narrowContainer(widget.id, widget.text)),
-            ],
-          ),
-          decoration: new BoxDecoration(
-            color: gouudAppColor,
-            boxShadow: [BoxShadow(color: gouudGrey, spreadRadius: 1)],
-            borderRadius: BorderRadius.all(Radius.circular(25.0)),
-          ),
-        ));
+              decoration: new BoxDecoration(
+                color: gouudAppColor,
+                boxShadow: [BoxShadow(color: gouudGrey, spreadRadius: 1)],
+                borderRadius: BorderRadius.all(Radius.circular(25.0)),
+              ),
+            )));
   }
 
   /// button widget
-  Widget narrowContainer(id, text) {
+  Widget narrowContainer(text, pageName, id) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (BuildContext context) => Products(id, text)));
+        pageName == "BestSeller"
+            ? Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (BuildContext context) => BestSeller()))
+            : Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (BuildContext context) => Products(id, text)));
       },
-      child: new Container(
-        width: 75,
-        height: 30,
-        child: Center(
-          child: Text(
-            "VIEW ALL",
-            style: TextStyle(fontSize: 10, color: gouudFontColor),
-          ),
-        ),
-        decoration: BoxDecoration(
-            borderRadius: new BorderRadius.circular(30.0),
-            border: Border.all(color: gouudWhite)),
-      ),
-    );
-  }
-}
-
-class NarrowCardViewAllOther extends StatefulWidget {
-  final String text;
-  final String navigate;
-  NarrowCardViewAllOther(this.text, this.navigate);
-
-  @override
-  _NarrowCardViewAllOtherState createState() => _NarrowCardViewAllOtherState();
-}
-
-class _NarrowCardViewAllOtherState extends State<NarrowCardViewAllOther> {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-        padding: EdgeInsets.only(left: 20, right: 20, top: 20),
-        child: Container(
-          height: 40,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.only(left: 15),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    GestureDetector(
-                      child: Text(
-                        widget.text,
-                        style: TextStyle(color: gouudWhite, fontSize: 10),
-                      ),
-                      onTap: () {},
-                    ),
-                    GestureDetector(
-                        onTap: () {},
-                        child: Text(
-                          'this water is very good',
-                          style: TextStyle(color: gouudFontColor, fontSize: 8),
-                        ))
-                  ],
-                ),
-              ),
-              Padding(
-                  padding: EdgeInsets.all(5),
-                  child: narrowContainer(widget.navigate)),
-            ],
-          ),
-          decoration: new BoxDecoration(
-            color: gouudAppColor,
-            boxShadow: [BoxShadow(color: gouudGrey, spreadRadius: 1)],
-            borderRadius: BorderRadius.all(Radius.circular(25.0)),
-          ),
-        ));
-  }
-
-  /// button widget
-  Widget narrowContainer(pageName) {
-    return GestureDetector(
-      onTap: () {},
       child: new Container(
         width: 75,
         height: 30,
