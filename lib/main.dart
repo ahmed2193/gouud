@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           fontFamily: 'jannatEn',
           primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
+          // visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         routes: {
           SplashScreen.id: (context) => SplashScreen(),
@@ -69,7 +69,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           fontFamily: 'jannatAr',
           primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
+          // visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         routes: {
           SplashScreen.id: (context) => SplashScreen(),

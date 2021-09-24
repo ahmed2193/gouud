@@ -6,8 +6,6 @@ import 'package:gouud/offers/view/Offers.dart';
 import 'package:gouud/profile/view/Profile.dart';
 import 'package:gouud/sections/view/Sections.dart';
 import 'package:gouud/UI_EN/constants/gouudColors.dart';
-import 'package:persistent_bottom_nav_bar/models/persisten-bottom-nav-item.widget.dart';
-import 'package:persistent_bottom_nav_bar/models/persistent-nav-bar-scaffold.widget.dart';
 import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
 
 class BottomHandler extends StatefulWidget {
@@ -42,14 +40,14 @@ class _BottomHandlerState extends State<BottomHandler> {
         title: ("HOME"),
         activeColor: gouudAppColor,
         inactiveColor: gouudWhite,
-        isTranslucent: true,
+        // isTranslucent: true,
       ),
       PersistentBottomNavBarItem(
         icon: Icon(Icons.widgets),
         title: ("SECTIONS"),
         activeColor: gouudAppColor,
         inactiveColor: gouudWhite,
-        isTranslucent: true,
+        // isTranslucent: true,
       ),
       PersistentBottomNavBarItem(
         icon: Icon(Icons.favorite_border),
@@ -57,21 +55,21 @@ class _BottomHandlerState extends State<BottomHandler> {
         // contentPadding: 100,
         activeColor: gouudAppColor,
         inactiveColor: gouudWhite,
-        isTranslucent: true,
+        // isTranslucent: true,
       ),
       PersistentBottomNavBarItem(
         icon: Icon(Icons.local_offer),
         title: ("OFFER"),
         activeColor: gouudAppColor,
         inactiveColor: gouudWhite,
-        isTranslucent: true,
+        // isTranslucent: true,
       ),
       PersistentBottomNavBarItem(
         icon: Icon(Icons.person_outline),
         title: ("ACCOUNT"),
         activeColor: gouudAppColor,
         inactiveColor: gouudWhite,
-        isTranslucent: true,
+        // isTranslucent: true,
       ),
     ];
   }
@@ -79,8 +77,8 @@ class _BottomHandlerState extends State<BottomHandler> {
   @override
   Widget build(BuildContext context) {
     return PersistentTabView(
-        navBarCurve: NavBarCurve.upperCorners,
-        navBarCurveRadius: 30,
+        // navBarCurve: NavBarCurve.upperCorners,
+        // navBarCurveRadius: 30,
         controller: _controller,
         screens: _buildScreens(),
         items:

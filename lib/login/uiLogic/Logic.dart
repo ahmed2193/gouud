@@ -10,13 +10,13 @@ class Logic {
     Map<String, String> result = {};
 
     if (email == '') {
-      result['Email'] = 'Please enter your email';
+      result['Email'] = 'The user name or password is incorrect.';
     } else {
       result['Email'] = '';
     }
 
     if (password == '') {
-      result['Password'] = 'Please enter your password';
+      result['Password'] = 'The user name or password is incorrect.';
     } else {
       result['Password'] = '';
     }

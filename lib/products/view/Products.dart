@@ -225,7 +225,7 @@ class _ProductCardState extends State<ProductCard> {
           pushNewScreen(
             context,
             screen: Login(),
-            platformSpecific: true,
+            // platformSpecific: true,
             withNavBar: false,
           );
         });
@@ -261,7 +261,7 @@ class _ProductCardState extends State<ProductCard> {
           pushNewScreen(
             context,
             screen: Login(),
-            platformSpecific: true,
+            // platformSpecific: true,
             withNavBar: false,
           );
         });
@@ -332,7 +332,7 @@ class _ProductCardState extends State<ProductCard> {
                             onTap: () {
                               pushNewScreen(context,
                                   screen: Product(widget.item.id),
-                                  platformSpecific: true,
+                                  // platformSpecific: true,
                                   withNavBar: false);
                             },
                             child: Padding(

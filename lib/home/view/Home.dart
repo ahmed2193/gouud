@@ -579,7 +579,7 @@ class _ProductCardState extends State<ProductCard> {
           pushNewScreen(
             context,
             screen: Login(),
-            platformSpecific: true,
+            // platformSpecific: true,
             withNavBar: false,
           );
         });
@@ -616,7 +616,7 @@ class _ProductCardState extends State<ProductCard> {
           pushNewScreen(
             context,
             screen: Login(),
-            platformSpecific: true,
+            // platformSpecific: true,
             withNavBar: false,
           );
         });
@@ -689,7 +689,7 @@ class _ProductCardState extends State<ProductCard> {
                             onTap: () {
                               pushNewScreen(context,
                                   screen: Product(widget.id),
-                                  platformSpecific: true,
+                                  // platformSpecific: true,
                                   withNavBar: false);
                             },
                             child: Padding(
@@ -1028,10 +1028,12 @@ class _NarrowCardViewAllState extends State<NarrowCardViewAll> {
       onTap: () {
         pageName == "BestSeller"
             ? pushNewScreen(context,
-                screen: BestSeller(), platformSpecific: true, withNavBar: true)
+                screen: BestSeller(), 
+                // platformSpecific: true
+                withNavBar: true)
             : pushNewScreen(context,
                 screen: Products(id, text),
-                platformSpecific: true,
+                // platformSpecific: true,
                 withNavBar: true);
       },
       child: new Container(
@@ -1068,7 +1070,7 @@ class _SpecialOfferCardState extends State<SpecialOfferCard> {
             onTap: () {
               pushNewScreen(context,
                   screen: SpecialOffers(),
-                  platformSpecific: true,
+                  // platformSpecific: true,
                   withNavBar: true);
             },
             child: Container(

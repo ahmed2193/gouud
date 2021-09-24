@@ -11,11 +11,14 @@ class LoginProvider with ChangeNotifier {
   Future getToken(email, password) async {
     final response = await LoginRequest().getToken(email, password);
     code = response.statusCode.toString();
-    print(code);
-    if (code == '201') {
+    print(" code::::: ${code}");     
+     print(" body::::: ${response.body.toString()}");
+
+    if (code == '200' ) {
       data = LoginModel.fromJson(json.decode(response.body));
-      _saveToken(data.data.token);
+      _saveToken(data.accessToken);
       _saveEntered();
+       print(" body sucsse?? ${response.body}");
     }
   }
 

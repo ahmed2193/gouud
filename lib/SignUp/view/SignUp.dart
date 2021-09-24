@@ -24,11 +24,12 @@ class _SignUpState extends State<SignUp> {
   Logic logic = new Logic();
   Map<String, String> inputs = {};
   String statusCode;
-  Future<CountryModel> countries;
-  String dropdownValue = '1';
+  Future<List<Data>> countries;
+  Data dropdownValue;
   @override
   void initState() {
     super.initState();
+    // dropdownValue.getid();
     countries = new SignUpProvider().countriesData();
   }
 
@@ -40,18 +41,20 @@ class _SignUpState extends State<SignUp> {
           mobileController.text.trim().toLowerCase(),
           passwordController.text.trim(),
           confirmPasswordController.text.trim(),
-          dropdownValue);
-      print(inputs);
+          dropdownValue.countryID.toString());
+      print(" output ???${inputs}");
     });
   }
 
+// Email is already taken.
   _foundEmail() {
     setState(() {
-      inputs['Email'] = 'Email is already taken.';
+      inputs['Email'] = 'This Email Is Exist Before ';
       inputs['Full name'] = '';
       inputs['Confirm password'] = '';
       inputs['Password'] = '';
       inputs['Mobile number'] = '';
+      // inputs['CountryId'] = 'error';
     });
     print(inputs);
   }
@@ -152,9 +155,10 @@ class _SignUpState extends State<SignUp> {
                         Column(
                           // mainAxisAlignment: MainAxisAlignment.end,
                           children: <Widget>[
-                            FutureBuilder<CountryModel>(
+                            FutureBuilder(
                               future: countries,
                               builder: (context, snapshot) {
+                                List<Data> data = snapshot.data;
                                 if (snapshot.hasData) {
                                   return DropdownButtonHideUnderline(
                                       child: Container(
@@ -165,6 +169,7 @@ class _SignUpState extends State<SignUp> {
                                           decoration: ShapeDecoration(
                                             color: gouudWhite,
                                             shape: RoundedRectangleBorder(
+                                              
                                               borderRadius: BorderRadius.all(
                                                   Radius.circular(30.0)),
                                             ),
@@ -185,36 +190,45 @@ class _SignUpState extends State<SignUp> {
                                                       ))),
                                               Expanded(
                                                   flex: 6,
-                                                  child: DropdownButton<String>(
-                                                    value: dropdownValue,
-                                                    icon: const Icon(
-                                                      Icons.arrow_drop_down,
-                                                      color: Color.fromRGBO(
-                                                          19, 102, 145, 1.0),
-                                                    ),
-                                                    iconSize: 24,
-                                                    elevation: 16,
-                                                    // isExpanded: true,
-                                                    style: TextStyle(
-                                                        color: Colors.black),
-                                                    onChanged:
-                                                        (String newValue) {
-                                                      setState(() {
-                                                        dropdownValue =
-                                                            newValue;
-                                                      });
-                                                    },
-                                                    items: snapshot.data.data
-                                                        .map((item) =>
-                                                            DropdownMenuItem<
-                                                                String>(
-                                                              child: Text(
-                                                                  item.nameEn),
-                                                              value: item.id
-                                                                  .toString(),
-                                                            ))
-                                                        .toList(),
-                                                  ))
+                                                  child: DropdownButton<Data>(
+                                                      value: dropdownValue,
+                                                      hint:dropdownValue==null ? Text('enter country') : Text(dropdownValue.name),
+                                                      icon: const Icon(
+                                                        Icons.arrow_drop_down,
+                                                        color: Color.fromRGBO(
+                                                            19, 102, 145, 1.0),
+                                                      ),
+                                                      iconSize: 24,
+                                                      elevation: 16,
+                                                      isExpanded: true,
+                                                      // hint: "enter country",
+                                                      style: TextStyle(
+                                                          color: Colors.black),
+                                                      onChanged:
+                                                          (var newValue) {
+                                                        setState(() {
+                                                          dropdownValue =
+                                                              newValue; 
+                                                          
+                                                          print(
+                                                              "Selected: ${dropdownValue.name} (${dropdownValue.countryID})");
+                                                        });
+                                                      },
+                                                      items: data
+                                                          .map((item) =>
+                                                              DropdownMenuItem<
+                                                                  Data>(
+                                                                child: Text(
+                                                                    item.name),
+                                                                value: item,
+                                                              ))
+                                                          .toList()))
+                                              //                                          listProvices?.map((Provinces value) {
+                                              //   return new DropdownMenuItem<Provinces>(
+                                              //     value: value,
+                                              //     child: new Text(value.name, style: new TextStyle(fontSize: 16.0),),
+                                              //   );
+                                              // })?.toList() ?? [],
                                             ],
                                           )));
                                 } else if (snapshot.hasError) {
@@ -628,166 +642,167 @@ class _PasswordState extends State<Password> {
   }
 }
 
-class Country extends StatefulWidget {
-  final TextEditingController controller;
-  Country(this.controller);
-  @override
-  _CountryState createState() => _CountryState();
-}
+// class Country extends StatefulWidget {
+//   final TextEditingController controller;
+//   Country(this.controller);
+//   @override
+//   _CountryState createState() => _CountryState();
+// }
 
-class _CountryState extends State<Country> {
-  Future<CountryModel> countries;
-  String dropdownValue = '1';
-  @override
-  Widget build(BuildContext context) {
-    return new Container(
-      width: 300,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          new InputDecorator(
-            decoration: const InputDecoration(
-              focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  width: 0,
-                  color: Color.fromRGBO(1, 178, 143, 1.0),
-                ),
-              ),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                    width: 0, color: Color.fromRGBO(1, 178, 143, 1.0)),
-              ),
-              prefixIcon: const Icon(
-                Icons.location_searching,
-                color: Color.fromRGBO(1, 178, 143, 1.0),
-              ),
-            ),
-            child: FutureBuilder<CountryModel>(
-              future: countries,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                    value: dropdownValue,
-                    icon: const Icon(
-                      Icons.arrow_drop_down,
-                      color: Color.fromRGBO(1, 178, 143, 1.0),
-                    ),
-                    iconSize: 24,
-                    elevation: 16,
-                    isExpanded: true,
-                    style: TextStyle(color: Colors.black),
-                    onChanged: (String newValue) {
-                      setState(() {
-                        dropdownValue = newValue;
-                      });
-                    },
-                    items: snapshot.data.data
-                        .map((item) => DropdownMenuItem<String>(
-                              child: Text(item.nameEn),
-                              value: item.id.toString(),
-                            ))
-                        .toList(),
-                  ));
-                } else if (snapshot.hasError) {
-                  return Text("");
-                }
+// class _CountryState extends State<Country> {
+//   Future<List<Data>> countries;
+//   String dropdownValue = '1';
+//   @override
+//   Widget build(BuildContext context) {
+//     return new Container(
+//       width: 300,
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.stretch,
+//         children: <Widget>[
+//           new InputDecorator(
+//             decoration: const InputDecoration(
+//               focusedBorder: UnderlineInputBorder(
+//                 borderSide: BorderSide(
+//                   width: 0,
+//                   color: Color.fromRGBO(1, 178, 143, 1.0),
+//                 ),
+//               ),
+//               enabledBorder: UnderlineInputBorder(
+//                 borderSide: BorderSide(
+//                     width: 0, color: Color.fromRGBO(1, 178, 143, 1.0)),
+//               ),
+//               prefixIcon: const Icon(
+//                 Icons.location_searching,
+//                 color: Color.fromRGBO(1, 178, 143, 1.0),
+//               ),
+//             ),
+//             child: FutureBuilder(
+//               future: countries,
+//               builder: (context, snapshot) {
+//                 if (snapshot.hasData) {
+//                   return DropdownButtonHideUnderline(
+//                       child: DropdownButton<String>(
+//                     value: dropdownValue,
+//                     icon: const Icon(
+//                       Icons.arrow_drop_down,
+//                       color: Color.fromRGBO(1, 178, 143, 1.0),
+//                     ),
+//                     iconSize: 24,
+//                     elevation: 16,
+//                     isExpanded: true,
+//                     style: TextStyle(color: Colors.black),
+//                     onChanged: (String newValue) {
+//                       setState(() {
+//                         dropdownValue = newValue;
+//                       });
+//                     },
+//                     items: snapshot.data.data
+//                             ?.map((item) => DropdownMenuItem<String>(
+//                                   child: Text(item.name),
+//                                   value: item.countryID.toString(),
+//                                 ))
+//                             .toList() ??
+//                         [],
+//                   ));
+//                 } else if (snapshot.hasError) {
+//                   return Text("");
+//                 }
 
-                return new Align(
-                  child: CircularProgressIndicator(),
-                  alignment: FractionalOffset.topLeft,
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+//                 return new Align(
+//                   child: CircularProgressIndicator(),
+//                   alignment: FractionalOffset.topLeft,
+//                 );
+//               },
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
 
-  Widget inputCountry(label, iconType) {
-    return new Container(
-        height: 40,
-        width: 260,
-        child: new InputDecorator(
-          decoration: new InputDecoration(
-            focusedBorder: OutlineInputBorder(
-              borderRadius: const BorderRadius.all(
-                const Radius.circular(30.0),
-              ),
-              borderSide: BorderSide(color: gouudAppColor, width: 2.0),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: gouudWhite, width: 2.0),
-              borderRadius: const BorderRadius.all(
-                const Radius.circular(30.0),
-              ),
-            ),
-            filled: true,
-            hintStyle: new TextStyle(color: gouudGrey, fontSize: 12),
-            hintText: label.toString(),
-            prefixIcon: Container(
-              width: 62,
-              decoration: new BoxDecoration(
-                color: gouudAppColor,
-                borderRadius: const BorderRadius.only(
-                    bottomLeft: const Radius.circular(30.0),
-                    topLeft: const Radius.circular(30.0)),
-              ),
-              child: iconType,
-            ),
-            fillColor: gouudWhite,
-          ),
-          child: FutureBuilder<List<String>>(
-            future: _getData(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                  value: dropdownValue,
-                  icon: const Icon(
-                    Icons.arrow_drop_down,
-                    color: Colors.grey,
-                  ),
-                  iconSize: 24,
-                  elevation: 16,
-                  isExpanded: true,
-                  style: TextStyle(color: gouudBackgroundColor),
-                  onChanged: (String newValue) {
-                    setState(() {
-                      dropdownValue = newValue;
-                    });
-                  },
-                  items: snapshot.data
-                      .map((item) => DropdownMenuItem<String>(
-                            child: Text(item),
-                            value: item,
-                          ))
-                      .toList(),
-                ));
-              } else if (snapshot.hasError) {
-                return Text("");
-              }
+//   Widget inputCountry(label, iconType) {
+//     return new Container(
+//         height: 40,
+//         width: 260,
+//         child: new InputDecorator(
+//           decoration: new InputDecoration(
+//             focusedBorder: OutlineInputBorder(
+//               borderRadius: const BorderRadius.all(
+//                 const Radius.circular(30.0),
+//               ),
+//               borderSide: BorderSide(color: gouudAppColor, width: 2.0),
+//             ),
+//             enabledBorder: OutlineInputBorder(
+//               borderSide: BorderSide(color: gouudWhite, width: 2.0),
+//               borderRadius: const BorderRadius.all(
+//                 const Radius.circular(30.0),
+//               ),
+//             ),
+//             filled: true,
+//             hintStyle: new TextStyle(color: gouudGrey, fontSize: 12),
+//             hintText: label.toString(),
+//             prefixIcon: Container(
+//               width: 62,
+//               decoration: new BoxDecoration(
+//                 color: gouudAppColor,
+//                 borderRadius: const BorderRadius.only(
+//                     bottomLeft: const Radius.circular(30.0),
+//                     topLeft: const Radius.circular(30.0)),
+//               ),
+//               child: iconType,
+//             ),
+//             fillColor: gouudWhite,
+//           ),
+//           child: FutureBuilder<List<String>>(
+//             future: _getData(),
+//             builder: (context, snapshot) {
+//               if (snapshot.hasData) {
+//                 return DropdownButtonHideUnderline(
+//                     child: DropdownButton<String>(
+//                   value: dropdownValue,
+//                   icon: const Icon(
+//                     Icons.arrow_drop_down,
+//                     color: Colors.grey,
+//                   ),
+//                   iconSize: 24,
+//                   elevation: 16,
+//                   isExpanded: true,
+//                   style: TextStyle(color: gouudBackgroundColor),
+//                   onChanged: (String newValue) {
+//                     setState(() {
+//                       dropdownValue = newValue;
+//                     });
+//                   },
+//                   items: snapshot.data
+//                       .map((item) => DropdownMenuItem<String>(
+//                             child: Text(item),
+//                             value: item,
+//                           ))
+//                       .toList(),
+//                 ));
+//               } else if (snapshot.hasError) {
+//                 return Text("");
+//               }
 
-              return new Align(
-                child: CircularProgressIndicator(),
-                alignment: FractionalOffset.topLeft,
-              );
-            },
-          ),
-        ));
-  }
+//               return new Align(
+//                 child: CircularProgressIndicator(),
+//                 alignment: FractionalOffset.topLeft,
+//               );
+//             },
+//           ),
+//         ));
+//   }
 
-  Future<List<String>> _getData() async {
-    var values = new List<String>();
-    values.add("Horses");
-    values.add("Goats");
-    values.add("Chickens");
-    //throw new Exception("Danger Will Robinson!!!");
-    await new Future.delayed(new Duration(seconds: 5));
-    return values;
-  }
-}
+//   Future<List<String>> _getData() async {
+//     var values = new List<String>();
+//     values.add("Horses");
+//     values.add("Goats");
+//     values.add("Chickens");
+//     //throw new Exception("Danger Will Robinson!!!");
+//     await new Future.delayed(new Duration(seconds: 5));
+//     return values;
+//   }
+// }
 
 class MyBehavior extends ScrollBehavior {
   @override
@@ -803,7 +818,7 @@ class ProgressButton extends StatefulWidget {
   final TextEditingController mobileController;
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
-  final String dropDownValue;
+  final Data dropDownValue;
   final Function() onpress;
   final Function() _foundEmail;
   ProgressButton(
@@ -899,7 +914,7 @@ class _ProgressButtonState extends State<ProgressButton>
               widget.mobileController.text.trim().toLowerCase(),
               widget.passwordController.text.trim(),
               widget.confirmPasswordController.text.trim(),
-              widget.dropDownValue)
+              widget.dropDownValue.countryID.toString())
           .isEmpty) {
         _state = 1;
       } else {
@@ -911,19 +926,22 @@ class _ProgressButtonState extends State<ProgressButton>
       SignUpProvider signUpP = new SignUpProvider();
       signUpP
           .register(logic.name, logic.email, logic.mobile, logic.password,
-              logic.confirmPassword, logic.countryId)
+              logic.confirmPassword, logic.countryId.toString())
           .whenComplete(() {
         setState(() {
-          if (signUpP.code == "201") {
+          if (signUpP.code == "200") {
             _state = 2;
-            Navigator.pushReplacement(
-                context, MaterialPageRoute(builder: (_) => BottomHandler()));
+            Timer(new Duration(milliseconds: 500), () {
+              Navigator.pushReplacement(
+                  context, MaterialPageRoute(builder: (_) => BottomHandler()));
+            });
           } else {
             widget._foundEmail();
             _state = 0;
           }
         });
-        print(signUpP.code);
+        // print("data  ${signUpP.data}" );
+        // print("error ${signUpP.code}");
       });
     }
   }

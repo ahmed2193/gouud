@@ -395,7 +395,7 @@ class _CardItemSectionState extends State<CardItemSection> {
           pushNewScreen(
             context,
             screen: Login(),
-            platformSpecific: true,
+            // platformSpecific: true,
             withNavBar: false,
           );
         });
